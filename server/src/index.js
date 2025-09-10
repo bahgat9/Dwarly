@@ -7,16 +7,16 @@ import cookieParser from 'cookie-parser'
 import schedule from 'node-schedule'
 
 // --- Routes
-import authRoutes from './routes/auth.js';
-import academyRoutes from './routes/academies.js';
-import academyRequestsRoutes from './routes/academyRequests.js';
-import matchRoutes from './routes/matches.js';
-import playerRequestsRoutes from './routes/playerRequests.js';
-import adminRoutes from './routes/admin.js';
-import userRoutes from './routes/user.js';
-import debugRoutes from './routes/debug.js';
-import jobRoutes from './routes/jobs.js';
-import jobApplicationRoutes from './routes/jobApplications.js';
+import authRoutes from './routes/auth.js'
+import academyRoutes from './routes/academies.js'
+import academyRequestsRoutes from './routes/academyRequests.js'
+import matchRoutes from './routes/matches.js'
+import playerRequestsRoutes from './routes/playerRequests.js'
+import adminRoutes from './routes/admin.js'
+import userRoutes from './routes/user.js'
+import debugRoutes from './routes/debug.js'
+import jobRoutes from './routes/jobs.js'
+import jobApplicationRoutes from './routes/jobApplications.js'
 
 // --- Models
 import User from './models/User.js'
@@ -32,7 +32,7 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }))
 app.use(cookieParser())
 app.use(morgan('dev'))
 
-// --- CORS setup (✅ fixed)
+// --- CORS setup
 const allowedOrigins = [
   "https://dwarly.vercel.app", // Production frontend
   "http://localhost:5173",     // Local dev
@@ -41,7 +41,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true) // allow tools like curl/Postman
+      if (!origin) return callback(null, true) // allow Postman/curl
       if (allowedOrigins.includes(origin)) {
         return callback(null, true)
       } else {
@@ -55,10 +55,10 @@ app.use(
   })
 )
 
-// ✅ Preflight for all routes
+// Handle preflight requests
 app.options("*", cors())
 
-// Serve uploaded files
+// --- Serve uploaded files
 app.use('/uploads', express.static('uploads'))
 
 // --- API routes
@@ -84,7 +84,7 @@ app.use((err, req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Server error' })
 })
 
-// --- Use Railway's PORT
+// --- Railway port
 const PORT = process.env.PORT || 4000
 
 async function start() {
@@ -98,24 +98,24 @@ async function start() {
     await mongoose.connect(uri, { autoIndex: true })
     console.log('✅ MongoDB connected')
 
-    // --- Schedule cleanup of finished matches older than 15 minutes
+    // --- Cleanup job
     schedule.scheduleJob('*/1 * * * *', async () => {
       try {
-        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
         const result = await Match.deleteMany({
           status: 'finished',
           updatedAt: { $lt: fifteenMinutesAgo }
-        });
+        })
         if (result.deletedCount > 0) {
-          console.log(`🗑️ Cleaned up ${result.deletedCount} finished matches older than 15 minutes`);
+          console.log(`🗑️ Cleaned up ${result.deletedCount} finished matches older than 15 minutes`)
         }
       } catch (error) {
-        console.error('❌ Error cleaning up finished matches:', error);
+        console.error('❌ Error cleaning up finished matches:', error)
       }
-    });
-    console.log('✅ Scheduled cleanup job for finished matches');
+    })
+    console.log('✅ Scheduled cleanup job for finished matches')
 
-    // --- Seed admin if none
+    // --- Seed admin
     const adminEmail = 'admin@dwarly.eg'
     const adminPass = 'DWARLY-Admin#2025'
     let admin = await User.findOne({ email: adminEmail })
@@ -129,7 +129,7 @@ async function start() {
       console.log('✅ Seeded admin:', adminEmail)
     }
 
-    // --- Seed sample academies if none
+    // --- Seed academies
     const countA = await Academy.countDocuments()
     if (countA === 0) {
       await Academy.insertMany([
@@ -153,7 +153,7 @@ async function start() {
       console.log('✅ Seeded sample academies')
     }
 
-    // --- Seed sample jobs if none
+    // --- Seed jobs
     const countJ = await Job.countDocuments()
     if (countJ === 0) {
       const academies = await Academy.find()
@@ -200,10 +200,10 @@ async function start() {
       }
     }
 
-    // --- Start server
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running on port ${PORT}`)
-    )
+    // --- Start server (✅ fixed to 0.0.0.0 for Railway)
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on http://0.0.0.0:${PORT}`)
+    })
   } catch (err) {
     console.error('❌ Startup error:', err)
     process.exit(1)
