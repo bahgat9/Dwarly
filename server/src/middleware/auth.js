@@ -46,11 +46,12 @@ export function auth(required = true) {
           expiresIn: "7d",
         });
 
+        // 🔑 Cross-site cookies need None + Secure
         res.cookie("token", newToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+          secure: true,       // required when using SameSite=None
+          sameSite: "none",   // allows Vercel <-> Railway
+          maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         req.user = newPayload;
