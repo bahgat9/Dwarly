@@ -35,7 +35,9 @@ app.use(morgan('dev'))
 // --- CORS setup
 const allowedOrigins = [
   "https://dwarly.vercel.app", // Production frontend
+  "https://dwarly-frontend.vercel.app", // Alternative Vercel URL
   "http://localhost:5173",     // Local dev
+  "http://localhost:3000",     // Alternative local dev
 ]
 
 app.use(

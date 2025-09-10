@@ -7,7 +7,7 @@ export default function NavBar({ session, onLogout }){
   const [open,setOpen]=useState(false)
   return (
     <div className="sticky top-0 z-40 backdrop-blur bg-brand-800/80 border-b border-white/10">
-      <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
+      <div className="mx-auto max-w-7xl px-3 md:px-4 py-2 md:py-3 flex items-center justify-between">
         <Link to="/" className="hover:opacity-90"><Logo/></Link>
         <div className="hidden md:flex items-center gap-3 text-white">
           <NavLink to="/academies" label="Academies / الأكاديميات" />
@@ -18,10 +18,10 @@ export default function NavBar({ session, onLogout }){
             <NavLink to="/login" label={<span className="inline-flex items-center gap-2"><LogIn size={16}/>Login</span>} />
           )}
         </div>
-        <button className="md:hidden text-white" onClick={()=>setOpen(v=>!v)}>{open? <X/>:<Menu/>}</button>
+        <button className="md:hidden text-white p-2" onClick={()=>setOpen(v=>!v)}>{open? <X size={20}/>:<Menu size={20}/>}</button>
       </div>
       {open && (
-        <div className="md:hidden px-4 pb-4 text-white space-y-2">
+        <div className="md:hidden px-3 pb-4 text-white space-y-2">
           <MobileLink to="/academies" label="Academies / الأكاديميات" onClick={()=>setOpen(false)} />
           <MobileLink to="/matches" label="Find Jobs / وظائف التدريب" onClick={()=>setOpen(false)} />
           {session ? (

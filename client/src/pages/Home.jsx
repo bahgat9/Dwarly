@@ -63,37 +63,37 @@ export default function Home(){
         <div className="absolute inset-0 bg-gradient-to-br from-brand-900/80 via-brand-800/60 to-brand-900/80 backdrop-blur-sm" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(178,255,58,0.15),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(178,255,58,0.1),transparent_35%)]" />
         
-        <div className="relative mx-auto max-w-7xl px-4 py-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="relative mx-auto max-w-7xl px-4 py-12 md:py-20 grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 md:mb-6 leading-tight">
               Discover Egypt's Premier<br />
               <span className="text-accent-500">Football Academies</span>
             </h1>
-            <p className="text-xl text-white/90 mb-8 leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 mb-6 md:mb-8 leading-relaxed">
               دورلي — منصة الذكية التي تربط بين أكاديميات كرة القدم واللاعبين المحترفين في مصر. 
               اكتشف، تواصل، وارتقِ بمستواك.
             </p>
             
-            <div className="flex flex-wrap gap-4 mb-12">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-8 md:mb-12">
               <Link 
                 to="/academies" 
-                className="px-8 py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-lg shadow-lg hover:shadow-glow hover:scale-105 transition-all duration-300"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-base md:text-lg shadow-lg hover:shadow-glow hover:scale-105 transition-all duration-300 text-center"
               >
                 🔍 Explore Academies
               </Link>
               <Link 
                 to="/matches" 
-                className="px-8 py-4 rounded-2xl bg-white/10 text-white font-bold text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-white/10 text-white font-bold text-base md:text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 text-center"
               >
                 💼 Find Jobs
               </Link>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               <InfoCard 
                 icon={<Shield className="w-8 h-8" />} 
                 title="Verified" 
@@ -153,7 +153,7 @@ export default function Home(){
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <FeatureHighlight
               icon={<MapPin />}
               title="Comprehensive Directory"
@@ -202,16 +202,16 @@ export default function Home(){
             <p className="text-xl text-white/80 mb-8">
               Join thousands of players and academies already using DWARLY to connect, compete, and grow.
             </p>
-            <div className="flex justify-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-6">
               <Link 
                 to="/signup" 
-                className="px-8 py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-lg hover:shadow-glow hover:scale-105 transition-all duration-300"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-base md:text-lg hover:shadow-glow hover:scale-105 transition-all duration-300 text-center"
               >
                 Get Started
               </Link>
               <Link 
                 to="/academies" 
-                className="px-8 py-4 rounded-2xl bg-white/10 text-white font-bold text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-white/10 text-white font-bold text-base md:text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 text-center"
               >
                 Browse Academies
               </Link>

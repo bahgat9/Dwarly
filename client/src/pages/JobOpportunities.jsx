@@ -69,12 +69,12 @@ function JobCard({ job, onApply, userApplications }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-white/5 to-white/2 rounded-3xl p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-200"
+      className="bg-gradient-to-br from-white/5 to-white/2 rounded-2xl md:rounded-3xl p-4 md:p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-200"
     >
       {/* Academy Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
+      <div className="flex items-start justify-between mb-3 md:mb-4">
+        <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+          <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden border-2 border-white/20 flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex-shrink-0">
             {job.academy?.logo ? (
               <img
                 src={job.academy.logo}
@@ -93,14 +93,14 @@ function JobCard({ job, onApply, userApplications }) {
               {job.academy?.name?.charAt(0) || 'A'}
             </div>
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-white">{job.academy?.name}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-lg md:text-xl font-bold text-white truncate">{job.academy?.name}</h3>
             {job.academy?.nameAr && (
-              <p className="text-white/70 text-sm">{job.academy.nameAr}</p>
+              <p className="text-white/70 text-xs md:text-sm truncate">{job.academy.nameAr}</p>
             )}
-            <div className="flex items-center gap-2 mt-1">
-              <Star className="w-4 h-4 text-yellow-400" />
-              <span className="text-yellow-400 text-sm font-semibold">
+            <div className="flex items-center gap-1 md:gap-2 mt-1">
+              <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 flex-shrink-0" />
+              <span className="text-yellow-400 text-xs md:text-sm font-semibold">
                 {job.academy?.rating || '4.5'}
               </span>
             </div>
@@ -109,34 +109,36 @@ function JobCard({ job, onApply, userApplications }) {
         
         {/* Application Status */}
         {hasApplied && (
-          <StatusBadge status={applicationStatus} />
+          <div className="flex-shrink-0 ml-2">
+            <StatusBadge status={applicationStatus} />
+          </div>
         )}
       </div>
 
       {/* Job Details */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         <div>
-          <h4 className="text-lg font-semibold text-white mb-2">{job.title}</h4>
-          <p className="text-white/80 text-sm leading-relaxed">{job.description}</p>
+          <h4 className="text-base md:text-lg font-semibold text-white mb-2">{job.title}</h4>
+          <p className="text-white/80 text-xs md:text-sm leading-relaxed line-clamp-3">{job.description}</p>
         </div>
 
         {/* Job Info Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
           <div className="flex items-center gap-2 text-white/70">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">{job.location}</span>
+            <MapPin className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+            <span className="text-xs md:text-sm truncate">{job.location}</span>
           </div>
           <div className="flex items-center gap-2 text-white/70">
-            <Clock className="w-4 h-4" />
-            <span className="text-sm">{job.type}</span>
+            <Clock className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+            <span className="text-xs md:text-sm">{job.type}</span>
           </div>
           <div className="flex items-center gap-2 text-white/70">
-            <Users className="w-4 h-4" />
-            <span className="text-sm">{job.ageGroup}</span>
+            <Users className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+            <span className="text-xs md:text-sm">{job.ageGroup}</span>
           </div>
           <div className="flex items-center gap-2 text-white/70">
-            <DollarSign className="w-4 h-4" />
-            <span className="text-sm">{job.salary || 'Negotiable'}</span>
+            <DollarSign className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+            <span className="text-xs md:text-sm truncate">{job.salary || 'Negotiable'}</span>
           </div>
         </div>
 
@@ -437,7 +439,7 @@ function JobApplicationModal({ job, isOpen, onClose, onSubmit }) {
 }
 
 // Main Component
-export default function JobOpportunities({ session }) {
+export default function JobOpportunities() {
   const [jobs, setJobs] = useState([])
   const [userApplications, setUserApplications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -449,17 +451,24 @@ export default function JobOpportunities({ session }) {
   // Load jobs and user applications
   useEffect(() => {
     loadData()
-  }, [session])
+  }, [])
 
   async function loadData() {
     try {
       setLoading(true)
-      const [jobsData, applicationsData] = await Promise.all([
-        api('/api/jobs'),
-        session ? api('/api/job-applications/my') : Promise.resolve([])
-      ])
+      
+      // Always load jobs
+      const jobsData = await api('/api/jobs')
       setJobs(Array.isArray(jobsData) ? jobsData : [])
-      setUserApplications(Array.isArray(applicationsData) ? applicationsData : [])
+      
+      // Try to load user applications, but don't fail if not authenticated
+      try {
+        const applicationsData = await api('/api/job-applications/my')
+        setUserApplications(Array.isArray(applicationsData) ? applicationsData : [])
+      } catch (authError) {
+        // User is not authenticated, set empty applications
+        setUserApplications([])
+      }
       
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -483,11 +492,6 @@ export default function JobOpportunities({ session }) {
   }, [jobs, searchQuery, filterType])
 
   const handleApply = (job) => {
-    if (!session) {
-      alert('Please log in to apply for jobs')
-      return
-    }
-    
     // Check if application deadline has passed
     if (job.applicationDeadline && new Date() > new Date(job.applicationDeadline)) {
       alert('The application deadline for this job has passed')
@@ -520,12 +524,12 @@ export default function JobOpportunities({ session }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center mb-12"
+          className="text-center mb-8 md:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 px-4">
             Coaching Job Opportunities
           </h1>
-          <p className="text-xl text-white/80 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto px-4">
             Find your next coaching position at top football academies across Egypt. 
             Apply with your CV and start your coaching journey.
           </p>
@@ -535,32 +539,32 @@ export default function JobOpportunities({ session }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-            <div className="flex flex-col md:flex-row gap-4">
+          <div className="bg-white/5 rounded-2xl p-4 md:p-6 border border-white/10">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               {/* Search */}
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-white/60" />
                   <input
                     type="text"
                     placeholder="Search jobs, academies, or locations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm md:text-base"
                   />
                 </div>
               </div>
 
               {/* Filter */}
-              <div className="md:w-64">
+              <div className="w-full sm:w-48 md:w-64">
                 <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60" />
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-white/60" />
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                    className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none text-sm md:text-base"
                     style={{ colorScheme: 'dark' }}
                   >
                     <option value="all" className="bg-slate-800 text-white">All Types</option>
@@ -579,7 +583,7 @@ export default function JobOpportunities({ session }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8"
         >
           <div className="bg-gradient-to-r from-blue-500/20 to-blue-600/20 rounded-2xl p-6 border border-blue-500/30">
             <div className="flex items-center gap-4">
@@ -624,7 +628,7 @@ export default function JobOpportunities({ session }) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6"
         >
           <AnimatePresence>
             {filteredJobs.map((job) => (

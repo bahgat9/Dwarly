@@ -1,5 +1,5 @@
 // client/src/api.js
-const base = import.meta.env.VITE_API_URL || "http://localhost:4000"
+const base = import.meta.env.VITE_API_URL || "https://dwarly-backend-production.up.railway.app"
 
 export async function api(
   url,
