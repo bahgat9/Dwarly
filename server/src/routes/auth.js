@@ -11,15 +11,21 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 // Helper: issue cookie + return token
 function setToken(res, user) {
   const token = jwt.sign(
-    { id: user._id, role: user.role, name: user.name, email: user.email, academyId: user.academyId },
+    {
+      id: user._id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      academyId: user.academyId,
+    },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
 
   res.cookie("token", token, {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "none", // ✅ allow cross-site
+    secure: true,     // ✅ required when SameSite=None
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
@@ -29,7 +35,6 @@ function setToken(res, user) {
 // --- Register / Signup (merged)
 router.post(["/register", "/signup"], async (req, res) => {
   try {
-    // Normalize input
     let name = (req.body?.name ?? "").trim();
     const email = (req.body?.email ?? "").trim().toLowerCase();
     const password = (req.body?.password ?? "").trim();
@@ -48,15 +53,13 @@ router.post(["/register", "/signup"], async (req, res) => {
     let resolvedAcademyName = academyName;
 
     if (academyIdFromBody) {
-      // ✅ direct academyId provided by admin
       const linkedAcademy = await Academy.findById(academyIdFromBody);
       if (linkedAcademy) {
         resolvedAcademyId = linkedAcademy._id;
         resolvedAcademyName = linkedAcademy.name;
-        if (!name) name = linkedAcademy.name; // auto-fill user.name
+        if (!name) name = linkedAcademy.name;
       }
     } else if ((role === "academy" || role === "user") && academyName) {
-      // fallback: lookup by academy name
       const byName = await Academy.findOne({
         $or: [
           { name: new RegExp("^" + academyName + "$", "i") },
@@ -74,7 +77,7 @@ router.post(["/register", "/signup"], async (req, res) => {
     const user = await User.create({
       name,
       email,
-      password, // pre("save") hook hashes it
+      password,
       phone,
       role,
       academyId: resolvedAcademyId || undefined,
@@ -103,7 +106,6 @@ router.post(["/register", "/signup"], async (req, res) => {
 // --- Login
 router.post("/login", async (req, res) => {
   try {
-    // Normalize input
     const email = (req.body?.email ?? "").trim().toLowerCase();
     const password = (req.body?.password ?? "").trim();
 
@@ -138,27 +140,17 @@ router.get("/session", auth(false), async (req, res) => {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.json({ user: null });
 
-    console.log("Session endpoint - User from DB:", {
-      id: user._id,
-      name: user.name,
-      role: user.role,
-      academyId: user.academyId,
-      academyName: user.academyName
+    res.json({
+      user: {
+        id: user._id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        academyId: user.academyId,
+        academyName: user.academyName,
+      },
     });
-
-    const userData = {
-      id: user._id,
-      role: user.role,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      academyId: user.academyId,
-      academyName: user.academyName,
-    };
-
-    console.log("Session endpoint - Response data:", userData);
-
-    res.json({ user: userData });
   } catch (e) {
     res.status(500).json({ error: "Session check failed", detail: e.message });
   }
@@ -168,11 +160,10 @@ router.get("/session", auth(false), async (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "none", // must match
+    secure: true,
   });
   res.json({ message: "Logged out" });
 });
 
-// Correct export
 export default router;
