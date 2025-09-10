@@ -32,16 +32,30 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }))
 app.use(cookieParser())
 app.use(morgan('dev'))
 
-// --- CORS setup
+// --- CORS setup (✅ fixed)
+const allowedOrigins = [
+  "https://dwarly.vercel.app", // Production frontend
+  "http://localhost:5173",     // Local dev
+]
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5173'],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true) // allow tools like curl/Postman
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      } else {
+        console.warn("❌ Blocked CORS request from:", origin)
+        return callback(new Error("Not allowed by CORS"), false)
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 )
-// Handle preflight requests globally
+
+// ✅ Preflight for all routes
 app.options("*", cors())
 
 // Serve uploaded files
