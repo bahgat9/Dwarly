@@ -1,0 +1,251 @@
+// server/src/routes/jobs.js
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+import Job from '../models/Job.js';
+import JobApplication from '../models/JobApplication.js';
+import Academy from '../models/Academy.js';
+import User from '../models/User.js';
+import { auth, requireRole } from '../middleware/auth.js';
+import { safeHandler } from '../utils/safeHandler.js';
+
+const router = express.Router();
+
+// Configure multer for CV uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../uploads/cvs');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = `${uuidv4()}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['.pdf', '.doc', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
+    }
+  }
+});
+
+// GET /api/jobs - Get all active jobs
+router.get('/', safeHandler(async (req, res) => {
+  const { type, academy, search } = req.query;
+  
+  let query = { status: 'active' };
+  
+  if (type && type !== 'all') {
+    query.type = type;
+  }
+  
+  if (academy) {
+    query.academy = academy;
+  }
+  
+  const jobs = await Job.find(query)
+    .populate('academy', 'name nameAr logo rating phone')
+    .populate('createdBy', 'name email')
+    .sort({ createdAt: -1 });
+  
+  // Filter by search term if provided
+  let filteredJobs = jobs;
+  if (search) {
+    const searchRegex = new RegExp(search, 'i');
+    filteredJobs = jobs.filter(job => 
+      job.title.match(searchRegex) ||
+      job.academy.name.match(searchRegex) ||
+      job.location.match(searchRegex) ||
+      job.description.match(searchRegex)
+    );
+  }
+  
+  res.json(filteredJobs);
+}));
+
+// GET /api/jobs/:id - Get specific job
+router.get('/:id', safeHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id)
+    .populate('academy', 'name nameAr logo rating phone address')
+    .populate('createdBy', 'name email phone');
+  
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  res.json(job);
+}));
+
+// POST /api/jobs - Create new job (academy only)
+router.post('/', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const {
+    title,
+    description,
+    location,
+    type,
+    ageGroup,
+    salary,
+    requirements,
+    applicationDeadline
+  } = req.body;
+  
+  // Validate required fields
+  if (!title || !description || !location || !type || !ageGroup) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  const job = new Job({
+    academy: req.user.academyId,
+    title,
+    description,
+    location,
+    type,
+    ageGroup,
+    salary: salary || undefined,
+    requirements: requirements || [],
+    applicationDeadline: applicationDeadline ? new Date(applicationDeadline) : undefined,
+    createdBy: req.user.id
+  });
+  
+  await job.save();
+  await job.populate('academy', 'name nameAr logo rating phone');
+  
+  res.status(201).json(job);
+}));
+
+// PUT /api/jobs/:id - Update job (academy only)
+router.put('/:id', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id);
+  
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  // Check if user owns this job
+  if (job.academy.toString() !== req.user.academyId) {
+    return res.status(403).json({ error: 'Not authorized to update this job' });
+  }
+  
+  const {
+    title,
+    description,
+    location,
+    type,
+    ageGroup,
+    salary,
+    requirements,
+    status,
+    applicationDeadline
+  } = req.body;
+  
+  // Update fields
+  if (title) job.title = title;
+  if (description) job.description = description;
+  if (location) job.location = location;
+  if (type) job.type = type;
+  if (ageGroup) job.ageGroup = ageGroup;
+  if (salary !== undefined) job.salary = salary;
+  if (requirements) job.requirements = requirements;
+  if (status) job.status = status;
+  if (applicationDeadline) job.applicationDeadline = new Date(applicationDeadline);
+  
+  await job.save();
+  await job.populate('academy', 'name nameAr logo rating phone');
+  
+  res.json(job);
+}));
+
+// DELETE /api/jobs/:id - Delete job (academy only)
+router.delete('/:id', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id);
+  
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  // Check if user owns this job
+  if (job.academy.toString() !== req.user.academyId) {
+    return res.status(403).json({ error: 'Not authorized to delete this job' });
+  }
+  
+  // Also delete all applications for this job
+  await JobApplication.deleteMany({ job: job._id });
+  
+  await Job.findByIdAndDelete(req.params.id);
+  
+  res.json({ message: 'Job deleted successfully' });
+}));
+
+// GET /api/jobs/:id/applications - Get applications for a job (academy only)
+router.get('/:id/applications', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id);
+  
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  // Check if user owns this job
+  if (job.academy.toString() !== req.user.academyId) {
+    return res.status(403).json({ error: 'Not authorized to view applications for this job' });
+  }
+  
+  const applications = await JobApplication.find({ job: req.params.id })
+    .populate('applicant', 'name email phone')
+    .sort({ createdAt: -1 });
+  
+  res.json(applications);
+}));
+
+// PUT /api/jobs/:id/applications/:applicationId/status - Update application status
+router.put('/:id/applications/:applicationId/status', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const { status, reviewNotes } = req.body;
+  
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  
+  const job = await Job.findById(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  // Check if user owns this job
+  if (job.academy.toString() !== req.user.academyId) {
+    return res.status(403).json({ error: 'Not authorized to update applications for this job' });
+  }
+  
+  const application = await JobApplication.findById(req.params.applicationId);
+  if (!application) {
+    return res.status(404).json({ error: 'Application not found' });
+  }
+  
+  application.status = status;
+  application.reviewedBy = req.user.id;
+  application.reviewedAt = new Date();
+  if (reviewNotes) application.reviewNotes = reviewNotes;
+  
+  await application.save();
+  
+  res.json(application);
+}));
+
+export default router;

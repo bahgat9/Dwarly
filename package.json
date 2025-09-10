@@ -1,0 +1,28 @@
+{
+  "name": "dwarly",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c red,cyan \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix client run build",
+    "start": "npm --prefix server run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "cloudinary": "^2.7.0",
+    "framer-motion": "^12.23.12",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.542.0",
+    "multer": "^2.0.2",
+    "react-datepicker": "^8.7.0",
+    "react-leaflet": "^4.2.1",
+    "sonner": "^2.0.7"
+  }
+}
