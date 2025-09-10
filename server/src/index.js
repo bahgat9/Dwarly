@@ -31,12 +31,18 @@ app.use(express.json({ limit: "5mb" }))
 app.use(express.urlencoded({ extended: true, limit: "5mb" }))
 app.use(cookieParser())
 app.use(morgan('dev'))
+
+// --- CORS setup
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:5173'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 )
+// Handle preflight requests globally
+app.options("*", cors())
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'))
@@ -64,7 +70,8 @@ app.use((err, req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Server error' })
 })
 
-const PORT = 4000
+// --- Use Railway's PORT
+const PORT = process.env.PORT || 4000
 
 async function start() {
   try {
@@ -99,11 +106,10 @@ async function start() {
     const adminPass = 'DWARLY-Admin#2025'
     let admin = await User.findOne({ email: adminEmail })
     if (!admin) {
-      // ⚡ Pass raw password → will be hashed by User.js pre("save")
       admin = await User.create({
         name: 'DWARLY Admin',
         email: adminEmail,
-        password: adminPass,
+        password: adminPass, // hashed by User.js pre("save")
         role: 'admin',
       })
       console.log('✅ Seeded admin:', adminEmail)
@@ -142,7 +148,7 @@ async function start() {
           {
             academy: academies[0]._id,
             title: 'Youth Coach - U12-U16',
-            description: 'We are looking for an experienced youth coach to lead our U12-U16 teams. The ideal candidate should have coaching experience with young players and a passion for developing talent.',
+            description: 'We are looking for an experienced youth coach...',
             location: 'Nasr City, Cairo',
             type: 'full-time',
             ageGroup: 'U12-U16',
@@ -154,7 +160,7 @@ async function start() {
           {
             academy: academies[1]._id,
             title: 'Assistant Coach',
-            description: 'Join our coaching staff as an assistant coach. You will work closely with the head coach to develop training programs and support player development.',
+            description: 'Join our coaching staff as an assistant coach...',
             location: 'Heliopolis, Cairo',
             type: 'part-time',
             ageGroup: 'U10-U14',
@@ -166,12 +172,12 @@ async function start() {
           {
             academy: academies[0]._id,
             title: 'Goalkeeper Coach',
-            description: 'Specialized goalkeeper coach needed to train our goalkeepers across all age groups. Experience with modern goalkeeping techniques required.',
+            description: 'Specialized goalkeeper coach needed...',
             location: 'Nasr City, Cairo',
             type: 'contract',
             ageGroup: 'All ages',
             salary: 'Negotiable',
-            requirements: ['Goalkeeper coaching certification', '5+ years experience', 'Professional background'],
+            requirements: ['Goalkeeper coaching certification', '5+ years experience'],
             status: 'active',
             createdBy: admin._id
           }
@@ -180,8 +186,9 @@ async function start() {
       }
     }
 
+    // --- Start server
     app.listen(PORT, () =>
-      console.log(`🚀 Server running on http://localhost:${PORT}`)
+      console.log(`🚀 Server running on port ${PORT}`)
     )
   } catch (err) {
     console.error('❌ Startup error:', err)
