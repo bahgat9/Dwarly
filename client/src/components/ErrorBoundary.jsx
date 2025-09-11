@@ -1,4 +1,24 @@
 import React from "react"
+import { useLanguage } from "../context/LanguageContext"
+
+function ErrorFallback() {
+  const { t } = useLanguage()
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-brand-900 text-white p-6">
+      <div className="max-w-md text-center space-y-4">
+        <h1 className="text-2xl font-bold">{t("common.somethingWentWrong")}</h1>
+        <p className="text-white/70">{t("common.pleaseRefresh")}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 rounded-lg bg-white text-brand-900 font-semibold"
+        >
+          {t("common.refresh")}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -16,20 +36,7 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-brand-900 text-white p-6">
-          <div className="max-w-md text-center space-y-4">
-            <h1 className="text-2xl font-bold">Something went wrong</h1>
-            <p className="text-white/70">Please refresh the page. If the issue persists, try again later.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg bg-white text-brand-900 font-semibold"
-            >
-              Refresh
-            </button>
-          </div>
-        </div>
-      )
+      return <ErrorFallback />
     }
     return this.props.children
   }

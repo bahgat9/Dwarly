@@ -2,9 +2,11 @@
 import React, { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useLanguage } from "../context/LanguageContext"
 
 export default function Signup() {
   const { register } = useAuth()
+  const { t } = useLanguage()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -27,7 +29,7 @@ export default function Signup() {
       else if (user.role === "academy") navigate("/academy/dashboard")
       else navigate("/user/dashboard")
     } catch (err) {
-      setError(err.error || err.message || "Signup failed")
+      setError(err.error || err.message || t("auth.registrationFailed"))
       console.error("Signup failed:", err)
     } finally {
       setLoading(false)
@@ -36,13 +38,13 @@ export default function Signup() {
 
   return (
     <div className="max-w-md mx-auto py-12">
-      <h1 className="text-2xl font-bold mb-6 text-brand-600">Create Account</h1>
+      <h1 className="text-2xl font-bold mb-6 text-brand-600">{t("auth.signup")}</h1>
       {error && <p className="text-red-500 mb-2">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          placeholder="Full name"
+          placeholder={t("auth.fullName")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
@@ -51,7 +53,7 @@ export default function Signup() {
         />
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("auth.email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
@@ -59,14 +61,14 @@ export default function Signup() {
         />
         <input
           type="text"
-          placeholder="Phone (optional)"
+          placeholder={t("auth.phoneOptional")}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
         />
         <input
           type="password"
-          placeholder="Password (min 6 chars)"
+          placeholder={t("auth.passwordMin")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
@@ -78,14 +80,14 @@ export default function Signup() {
           disabled={loading}
           className="w-full bg-gradient-to-r from-brand-600 to-accent-500 text-white p-2 rounded"
         >
-          {loading ? "Signing up..." : "Sign Up"}
+          {loading ? t("auth.signingUp") : t("auth.signupButton")}
         </button>
       </form>
 
       <p className="text-sm text-white/70 mt-4 text-center">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link to="/login" className="text-blue-400 hover:underline">
-          Login
+          {t("auth.login")}
         </Link>
       </p>
     </div>

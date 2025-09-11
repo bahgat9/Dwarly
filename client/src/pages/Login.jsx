@@ -3,9 +3,11 @@ import React, { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { api } from "../api"
 import { useAuth } from "../context/AuthContext"
+import { useLanguage } from "../context/LanguageContext"
 
 export default function Login() {
   const { login } = useAuth()
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState(null)
@@ -26,7 +28,7 @@ export default function Login() {
       else if (user.role === "academy") navigate("/academy/dashboard")
       else navigate("/user/dashboard")
     } catch (err) {
-      setError(err.error || err.message || "Invalid email or password")
+      setError(err.error || err.message || t("auth.invalidCredentials"))
       console.error("Login failed:", err)
     } finally {
       setLoading(false)
@@ -35,13 +37,13 @@ export default function Login() {
 
   return (
     <div className="max-w-md mx-auto py-12">
-      <h1 className="text-2xl font-bold mb-6 text-brand-600">Login</h1>
+      <h1 className="text-2xl font-bold mb-6 text-brand-600">{t("auth.login")}</h1>
       {error && <p className="text-red-500 mb-2">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("auth.email")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
@@ -50,7 +52,7 @@ export default function Login() {
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t("auth.password")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 rounded bg-white/10"
@@ -62,14 +64,14 @@ export default function Login() {
           disabled={loading}
           className="w-full bg-gradient-to-r from-brand-600 to-accent-500 text-white p-2 rounded"
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading ? t("common.loading") : t("auth.loginButton")}
         </button>
       </form>
 
       <p className="text-sm text-white/70 mt-4 text-center">
-        Don’t have an account?{" "}
+        {t("auth.dontHaveAccount")}{" "}
         <Link to="/signup" className="text-blue-400 hover:underline">
-          Sign up
+          {t("auth.signup")}
         </Link>
       </p>
     </div>

@@ -27,6 +27,7 @@ import Forbidden from "./pages/Forbidden.jsx"
 import LoadingSkeleton from "./components/LoadingSkeleton.jsx" // ✅ skeleton
 
 import { useAuth } from "./context/AuthContext";
+import { useLanguage } from "./context/LanguageContext";
 
 // ✅ new academy pages
 import AcademyMatchRequests from "./pages/academy/AcademyMatchRequests.jsx"
@@ -56,6 +57,7 @@ const Page = ({ children }) => (
 
 export default function App() {
   const { user: session, loading, logout: authLogout } = useAuth();
+  const { t } = useLanguage();
   const [academies, setAcademies] = useState([])
   const [matches, setMatches] = useState([])
 
@@ -199,7 +201,7 @@ export default function App() {
                 <span className="font-bold">DWARLY</span>
                 <span>© {new Date().getFullYear()}</span>
               </div>
-              <div className="text-sm">Made for Egyptian football families. ⚽🇪🇬</div>
+              <div className="text-sm">{t("public.madeForEgyptian")}</div>
             </div>
           </div>
         )}

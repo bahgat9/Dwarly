@@ -5,6 +5,7 @@ import { api } from "../../api"
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx"
 import { Users, Building, Trophy, Clock, ArrowUpRight, CheckCircle, XCircle, Clock as PendingIcon } from "lucide-react"
 import { motion } from "framer-motion"
+import { useLanguage } from "../../context/LanguageContext"
 
 const StatCard = ({ icon, title, value, color = "blue", loading }) => {
   const colors = {
@@ -94,6 +95,7 @@ const QuickLinkCard = ({ to, icon, title, description, color = "blue" }) => {
 }
 
 export default function AdminDashboard({ session }) {
+  const { t } = useLanguage()
   const [stats, setStats] = useState({})
   const [latestRequests, setLatestRequests] = useState([])
   const [loading, setLoading] = useState(true)
@@ -124,15 +126,15 @@ export default function AdminDashboard({ session }) {
         className="bg-gradient-to-r from-brand-700 to-brand-800 rounded-3xl p-8 border border-white/10 shadow-2xl"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Admin Dashboard 👑
-            </h1>
-            <p className="text-white/80 text-lg">
-              Welcome back, <span className="text-accent-400 font-semibold">{session?.name}</span>. 
-              Here's your platform overview.
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {t("admin.dashboard")} 👑
+          </h1>
+          <p className="text-white/80 text-lg">
+            {t("admin.welcomeBack")}, <span className="text-accent-400 font-semibold">{session?.name}</span>. 
+            {t("admin.platformOverview")}
+          </p>
+        </div>
           <div className="text-6xl opacity-20">⚽</div>
         </div>
       </motion.div>
@@ -141,28 +143,28 @@ export default function AdminDashboard({ session }) {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Users className="w-6 h-6" />}
-          title="Total Users"
+          title={t("admin.totalUsers")}
           value={stats.users}
           color="blue"
           loading={loading}
         />
         <StatCard
           icon={<Building className="w-6 h-6" />}
-          title="Academies"
+          title={t("admin.totalAcademies")}
           value={stats.academies}
           color="green"
           loading={loading}
         />
         <StatCard
           icon={<Trophy className="w-6 h-6" />}
-          title="Matches"
+          title={t("admin.totalMatches")}
           value={stats.matches}
           color="purple"
           loading={loading}
         />
         <StatCard
           icon={<Clock className="w-6 h-6" />}
-          title="Pending Requests"
+          title={t("admin.pendingRequests")}
           value={stats.playerRequests}
           color="amber"
           loading={loading}
@@ -178,12 +180,12 @@ export default function AdminDashboard({ session }) {
           className="bg-gradient-to-br from-brand-700 to-brand-800 rounded-3xl p-6 border border-white/10 shadow-xl"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Recent Requests</h2>
+            <h2 className="text-xl font-semibold text-white">{t("admin.recentRequests")}</h2>
             <Link
               to="/admin/requests"
               className="text-accent-400 hover:text-accent-300 text-sm font-medium flex items-center gap-1"
             >
-              View all <ArrowUpRight className="w-4 h-4" />
+              {t("admin.viewAll")} <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           
@@ -196,7 +198,7 @@ export default function AdminDashboard({ session }) {
           ) : latestRequests.length === 0 ? (
             <div className="text-center py-8">
               <div className="text-4xl mb-4">📭</div>
-              <p className="text-white/70">No requests yet</p>
+              <p className="text-white/70">{t("admin.noRequestsYet")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -214,34 +216,34 @@ export default function AdminDashboard({ session }) {
           transition={{ delay: 0.3 }}
           className="space-y-6"
         >
-          <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">{t("admin.quickActions")}</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <QuickLinkCard
               to="/admin/academies"
               icon="🏫"
-              title="Manage Academies"
-              description="View and manage all football academies"
+              title={t("admin.manageAcademies")}
+              description={t("admin.manageAcademiesDesc")}
               color="green"
             />
             <QuickLinkCard
               to="/admin/matches"
               icon="⚽"
-              title="Manage Matches"
-              description="Oversee scheduled matches and events"
+              title={t("admin.manageMatches")}
+              description={t("admin.manageMatchesDesc")}
               color="blue"
             />
             <QuickLinkCard
               to="/admin/requests"
               icon="📥"
-              title="Manage Requests"
-              description="Handle academy join requests"
+              title={t("admin.manageRequests")}
+              description={t("admin.manageRequestsDesc")}
               color="purple"
             />
             <QuickLinkCard
               to="/admin/users"
               icon="👥"
-              title="Manage Users"
-              description="View and manage user accounts"
+              title={t("admin.manageUsers")}
+              description={t("admin.manageUsersDesc")}
               color="amber"
             />
           </div>
@@ -256,14 +258,14 @@ export default function AdminDashboard({ session }) {
         className="bg-gradient-to-r from-brand-700 to-brand-800 rounded-3xl p-6 border border-white/10 shadow-xl"
       >
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Platform Status</h3>
-            <p className="text-white/70">All systems operational</p>
-          </div>
-          <div className="flex items-center gap-2 text-green-400">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm font-medium">Online</span>
-          </div>
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-2">{t("admin.platformStatus")}</h3>
+          <p className="text-white/70">{t("admin.allSystemsOperational")}</p>
+        </div>
+        <div className="flex items-center gap-2 text-green-400">
+          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-sm font-medium">{t("admin.online")}</span>
+        </div>
         </div>
       </motion.div>
     </div>

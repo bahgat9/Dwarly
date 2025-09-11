@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Shield, Trophy, Users, Star, MapPin, Calendar, Users2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '../context/LanguageContext'
 
 const InfoCard = ({ icon, title, text, delay = 0 }) => (
   <motion.div
@@ -27,6 +28,7 @@ const FeatureHighlight = ({ icon, title, description }) => (
 );
 
 export default function Home(){
+  const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function Home(){
             />
           </div>
           <h2 className="text-2xl font-bold text-white">DWARLY / دورلي</h2>
-          <p className="text-white/70 mt-2">Loading your football journey...</p>
+          <p className="text-white/70 mt-2">{t("common.loading")}</p>
         </motion.div>
       </div>
     );
@@ -70,12 +72,11 @@ export default function Home(){
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 md:mb-6 leading-tight">
-              Discover Egypt's Premier<br />
-              <span className="text-accent-500">Football Academies</span>
+              {t("public.welcome")}<br />
+              <span className="text-accent-500">{t("public.tagline")}</span>
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-6 md:mb-8 leading-relaxed">
-              دورلي — منصة الذكية التي تربط بين أكاديميات كرة القدم واللاعبين المحترفين في مصر. 
-              اكتشف، تواصل، وارتقِ بمستواك.
+              {t("public.aboutUsDesc")}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mb-8 md:mb-12">
@@ -83,13 +84,13 @@ export default function Home(){
                 to="/academies" 
                 className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-base md:text-lg shadow-lg hover:shadow-glow hover:scale-105 transition-all duration-300 text-center"
               >
-                🔍 Explore Academies
+                🔍 {t("public.findAcademies")}
               </Link>
               <Link 
                 to="/matches" 
                 className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-white/10 text-white font-bold text-base md:text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 text-center"
               >
-                💼 Find Jobs
+                💼 {t("public.jobOpportunities")}
               </Link>
             </div>
 
@@ -147,27 +148,27 @@ export default function Home(){
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-white mb-4">Why Choose DWARLY?</h2>
+            <h2 className="text-4xl font-bold text-white mb-4">{t("public.features")}</h2>
             <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Revolutionizing how football academies and players connect in Egypt
+              {t("public.aboutUsDesc")}
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             <FeatureHighlight
               icon={<MapPin />}
-              title="Comprehensive Directory"
-              description="Access to all major football academies across Egypt with detailed information and locations"
+              title={t("public.findAcademies")}
+              description={t("public.findAcademiesDesc")}
             />
             <FeatureHighlight
               icon={<Calendar />}
-              title="Job Opportunities"
-              description="Find coaching positions at top football academies across Egypt"
+              title={t("public.jobOpportunities")}
+              description={t("public.jobOpportunitiesDesc")}
             />
             <FeatureHighlight
               icon={<Users2 />}
-              title="Player Management"
-              description="Streamlined player registration and academy membership management"
+              title={t("public.playerManagement")}
+              description={t("public.playerManagementDesc")}
             />
             <FeatureHighlight
               icon={<Shield />}
@@ -197,23 +198,23 @@ export default function Home(){
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to Elevate Your Football Journey?
+              {t("public.getStarted")}
             </h2>
             <p className="text-xl text-white/80 mb-8">
-              Join thousands of players and academies already using DWARLY to connect, compete, and grow.
+              {t("public.aboutUsDesc")}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-6">
               <Link 
                 to="/signup" 
                 className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-accent-500 text-brand-900 font-bold text-base md:text-lg hover:shadow-glow hover:scale-105 transition-all duration-300 text-center"
               >
-                Get Started
+                {t("public.getStarted")}
               </Link>
               <Link 
                 to="/academies" 
                 className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-white/10 text-white font-bold text-base md:text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 text-center"
               >
-                Browse Academies
+                {t("public.findAcademies")}
               </Link>
             </div>
           </motion.div>

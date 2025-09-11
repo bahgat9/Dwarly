@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../api";
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx";
 import { Plus, Trash2, Shield, Building, User as UserIcon } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function AdminUsers() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,7 +18,7 @@ export default function AdminUsers() {
       setUsers(data || []);
     } catch (err) {
       console.error("Failed to load users:", err);
-      setError("Failed to load users. Please try again.");
+      setError(t("common.failedToLoad") + " " + t("admin.users").toLowerCase() + ". " + t("common.tryAgain"));
     } finally {
       setLoading(false);
     }
@@ -27,12 +29,12 @@ export default function AdminUsers() {
   }, []);
 
   async function removeUser(id) {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    if (!window.confirm(t("common.confirmDelete") + " " + t("common.user") + "?")) return;
     try {
       await api(`/api/users/${id}`, { method: "DELETE" });
       setUsers((prev) => prev.filter((user) => user._id !== id));
     } catch (err) {
-      alert("Failed to delete user.");
+      alert(t("common.failedToDelete") + " " + t("common.user") + ".");
     }
   }
 
@@ -53,7 +55,7 @@ export default function AdminUsers() {
           )}
         </div>
         <button onClick={() => removeUser(user._id)} className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-sm flex items-center gap-1">
-          <Trash2 size={14} /> Delete
+          <Trash2 size={14} /> {t("common.delete")}
         </button>
       </div>
     </div>
@@ -82,13 +84,13 @@ export default function AdminUsers() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 text-white">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-8">
-        <h2 className="text-3xl font-extrabold">Admin • Users Management</h2>
+        <h2 className="text-3xl font-extrabold">{t("admin.panel")} • {t("admin.usersManagement")}</h2>
         <button
           onClick={() => {/* Logic to add user */}}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white text-brand-900 font-semibold shadow"
         >
           <Plus size={16} />
-          Add User
+          {t("admin.addUser")}
         </button>
       </div>
 
@@ -96,7 +98,7 @@ export default function AdminUsers() {
         <div className="mb-6 bg-red-500/20 text-red-400 p-6 rounded-xl">
           {error}
           <button onClick={loadUsers} className="ml-4 px-3 py-1 bg-red-500 text-white rounded-xl">
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}
@@ -110,24 +112,24 @@ export default function AdminUsers() {
       ) : (
         <div className="space-y-8">
           <UserSection
-            title="Administrators"
+            title={t("admin.administrators")}
             users={admins}
             icon={Shield}
-            emptyMessage="No administrators found"
+            emptyMessage={t("admin.noAdmins")}
           />
           
           <UserSection
-            title="Academies"
+            title={t("admin.academyAccounts")}
             users={academies}
             icon={Building}
-            emptyMessage="No academy accounts found"
+            emptyMessage={t("admin.noAcademies")}
           />
           
           <UserSection
-            title="Users"
+            title={t("admin.regularUsers")}
             users={regularUsers}
             icon={UserIcon}
-            emptyMessage="No regular users found"
+            emptyMessage={t("admin.noUsers")}
           />
         </div>
       )}
