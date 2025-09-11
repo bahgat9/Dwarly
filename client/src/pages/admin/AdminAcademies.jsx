@@ -3,11 +3,10 @@ import React, { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Trash2 } from "lucide-react"
 import Select from "react-select"
-// ⬇️ Adjust this import path if your api.js is elsewhere
-import { api } from "../api"
-import LoadingSkeleton from "../components/LoadingSkeleton.jsx"
-import LocationPicker from "../components/LocationPicker.jsx"
-import { useLanguage } from "../context/LanguageContext"
+import { api } from "../../api"
+import LoadingSkeleton from "../../components/LoadingSkeleton.jsx"
+import LocationPicker from "../../components/LocationPicker.jsx"
+import { useLanguage } from "../../context/LanguageContext"
 
 const yearOptions = Array.from({ length: 2021 - 2005 + 1 }, (_, i) => {
   const year = 2005 + i
@@ -576,12 +575,12 @@ export default function AdminAcademies({ session }) {
                 >
                   {t("adminAcademies.addTime")}
                 </button>
-                {(form.trainingTimes || []).map((t, i) => (
+                {(form.trainingTimes || []).map((trainingTime, i) => (
                   <div key={i} className="grid grid-cols-2 gap-2 mt-2">
                     <input
                       className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                       placeholder={t("adminAcademies.day")}
-                      value={t.day ?? ""}
+                      value={trainingTime.day ?? ""}
                       onChange={(e) => {
                         const arr = [...(form.trainingTimes || [])]
                         arr[i] = { ...arr[i], day: e.target.value }
@@ -591,7 +590,7 @@ export default function AdminAcademies({ session }) {
                     <input
                       className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                       placeholder={t("adminAcademies.time")}
-                      value={t.time ?? ""}
+                      value={trainingTime.time ?? ""}
                       onChange={(e) => {
                         const arr = [...(form.trainingTimes || [])]
                         arr[i] = { ...arr[i], time: e.target.value }
