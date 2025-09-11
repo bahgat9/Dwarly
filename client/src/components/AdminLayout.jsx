@@ -1,5 +1,5 @@
 // src/components/AdminLayout.jsx
-import React from "react"
+import React, { useState } from "react"
 import { Outlet, useLocation, Link } from "react-router-dom"
 import { LogOut } from "lucide-react"
 import AdminSidebar from "./AdminSidebar"
@@ -7,6 +7,10 @@ import AdminTopbar from "./AdminTopbar"
 
 export default function AdminLayout({ session, onLogout }) {
   const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
+  const closeSidebar = () => setSidebarOpen(false)
 
   // ✅ If not logged in as admin, redirect
   if (!session || session.role !== "admin") {
@@ -29,12 +33,16 @@ export default function AdminLayout({ session, onLogout }) {
   return (
     <div className="flex min-h-screen bg-brand-900 text-white">
       {/* Sidebar */}
-      <AdminSidebar />
+      <AdminSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
       {/* Main Area */}
       <div className="flex flex-col flex-1">
         {/* Topbar */}
-        <AdminTopbar session={session} onLogout={onLogout} />
+        <AdminTopbar 
+          session={session} 
+          onLogout={onLogout} 
+          onToggleSidebar={toggleSidebar}
+        />
 
         {/* Page Content */}
         <main className="flex-1 p-4 md:p-6">

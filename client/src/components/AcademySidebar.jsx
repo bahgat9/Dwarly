@@ -8,43 +8,61 @@ import {
   BarChart,
   Briefcase
 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
-const links = [
-  {
-    to: "/academy/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard
-  },
-  {
-    to: "/academy/players",
-    label: "Players",
-    icon: Users
-  },
-  {
-    to: "/academy/matches",
-    label: "Matches",
-    icon: Calendar
-  },
-  {
-    to: "/academy/requests",
-    label: "Requests",
-    icon: FileText
-  },
-  {
-    to: "/academy/analysis",
-    label: "Analysis",
-    icon: BarChart
-  },
-  {
-    to: "/academy/jobs",
-    label: "Jobs",
-    icon: Briefcase
-  }
-];
+export default function AcademySidebar({ isOpen, onClose }) {
+  const { t } = useLanguage();
 
-export default function AcademySidebar() {
+  const links = [
+    {
+      to: "/academy/dashboard",
+      label: t("academy.dashboard"),
+      icon: LayoutDashboard
+    },
+    {
+      to: "/academy/players",
+      label: t("academy.players"),
+      icon: Users
+    },
+    {
+      to: "/academy/matches",
+      label: t("academy.matches"),
+      icon: Calendar
+    },
+    {
+      to: "/academy/requests",
+      label: t("academy.requests"),
+      icon: FileText
+    },
+    {
+      to: "/academy/analysis",
+      label: t("academy.analysis"),
+      icon: BarChart
+    },
+    {
+      to: "/academy/jobs",
+      label: t("academy.jobs"),
+      icon: Briefcase
+    }
+  ];
   return (
-    <aside className="hidden md:flex w-64 bg-brand-900 border-r border-brand-800 p-4 flex-col">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed md:relative inset-y-0 left-0 z-50 md:z-auto
+        w-64 bg-brand-900 border-r border-brand-800 p-4 flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        flex
+      `}>
       {/* Logo / title */}
       <div className="mb-8">
         <h1 className="text-xl font-bold text-white tracking-wide">
@@ -71,6 +89,7 @@ export default function AcademySidebar() {
           </NavLink>
         ))}
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }

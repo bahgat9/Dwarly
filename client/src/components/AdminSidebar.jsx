@@ -8,44 +8,61 @@ import {
   Calendar,
   FileText
 } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
 
-const links = [
-  {
-    to: "/admin/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard
-  },
-  {
-    to: "/admin/users",
-    label: "Users",
-    icon: Users
-  },
-  {
-    to: "/admin/academies",
-    label: "Academies",
-    icon: Building2
-  },
-  {
-    to: "/admin/create-academy-account",
-    label: "Create Academy Account",
-    icon: Building2 // you can swap for another Lucide icon if you prefer
-  },
-  {
-    to: "/admin/matches",
-    label: "Matches",
-    icon: Calendar
-  },
-  {
-    to: "/admin/requests",
-    label: "Requests",
-    icon: FileText
-  }
-];
+export default function AdminSidebar({ isOpen, onClose }) {
+  const { t } = useLanguage();
 
-
-export default function AdminSidebar() {
+  const links = [
+    {
+      to: "/admin/dashboard",
+      label: t("admin.dashboard"),
+      icon: LayoutDashboard
+    },
+    {
+      to: "/admin/users",
+      label: t("admin.users"),
+      icon: Users
+    },
+    {
+      to: "/admin/academies",
+      label: t("admin.academies"),
+      icon: Building2
+    },
+    {
+      to: "/admin/create-academy-account",
+      label: t("admin.createAcademy"),
+      icon: Building2
+    },
+    {
+      to: "/admin/matches",
+      label: t("admin.matches"),
+      icon: Calendar
+    },
+    {
+      to: "/admin/requests",
+      label: t("admin.requests"),
+      icon: FileText
+    }
+  ];
   return (
-    <aside className="hidden md:flex w-64 bg-brand-900 border-r border-brand-800 p-4 flex-col">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed md:relative inset-y-0 left-0 z-50 md:z-auto
+        w-64 bg-brand-900 border-r border-brand-800 p-4 flex-col
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        flex
+      `}>
       {/* Logo / title */}
       <div className="mb-8">
         <h1 className="text-xl font-bold text-white tracking-wide">
@@ -72,6 +89,7 @@ export default function AdminSidebar() {
           </NavLink>
         ))}
       </nav>
-    </aside>
+      </aside>
+    </>
   );
 }
