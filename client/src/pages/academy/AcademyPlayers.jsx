@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useLanguage } from "../../context/LanguageContext"
 
 /**
  * Attractive, modern AcademyPlayers page
@@ -61,6 +62,7 @@ function PositionBadge({ pos }) {
 }
 
 export default function AcademyPlayers({ session }) {
+  const { t } = useLanguage()
   const [players, setPlayers] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -139,7 +141,7 @@ export default function AcademyPlayers({ session }) {
     e?.preventDefault?.()
     setError("")
     if (!form.name?.trim()) {
-      setError("Please provide the player's name.")
+      setError(t("academy.pleaseProvideName"))
       return
     }
     setSubmitting(true)
@@ -173,14 +175,14 @@ export default function AcademyPlayers({ session }) {
       await loadPlayers(1)
     } catch (err) {
       console.error("Failed to add player:", err)
-      setError(err?.message || "Failed to add player.")
+      setError(err?.message || t("academy.failedToAddPlayer"))
     } finally {
       setSubmitting(false)
     }
   }
 
   async function doRemovePlayer(id) {
-    if (!window.confirm("Delete player? This action cannot be undone.")) return
+    if (!window.confirm(t("academy.deletePlayerConfirm"))) return
     try {
       await api(`/api/academies/${session.academyId}/players/${id}`, { method: "DELETE" })
       // small optimistic UX: remove immediately without reload
@@ -191,7 +193,7 @@ export default function AcademyPlayers({ session }) {
       await loadPlayers(page)
     } catch (err) {
       console.error("Failed to remove player:", err)
-      setError("Could not remove player.")
+      setError(t("academy.couldNotRemovePlayer"))
     }
   }
 
@@ -234,9 +236,9 @@ export default function AcademyPlayers({ session }) {
         >
           <div className="flex items-start justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-extrabold tracking-tight">Academy Players</h1>
+              <h1 className="text-4xl font-extrabold tracking-tight">{t("academy.players")}</h1>
               <p className="mt-2 text-white/80 max-w-xl">
-                Manage your squad with beautiful, fast interactions — add players, upload their avatars, filter and analyze.
+                {t("academy.managePlayersDesc")} — {t("academy.managePlayers")}, upload avatars, filter and analyze.
               </p>
               <div className="mt-4 flex items-center gap-3">
                 <motion.div
@@ -248,7 +250,7 @@ export default function AcademyPlayers({ session }) {
                     <Users className="w-6 h-6 text-white/90" />
                     <div>
                       <div className="text-2xl font-semibold">{stats.total}</div>
-                      <div className="text-xs text-white/70">Total Players</div>
+                      <div className="text-xs text-white/70">{t("academy.totalPlayers")}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -260,7 +262,7 @@ export default function AcademyPlayers({ session }) {
                 >
                   <div className="flex items-center gap-3 bg-white/6 px-4 py-3 rounded-xl border border-white/10">
                     <div className="text-2xl font-semibold">{stats.avgAge || "—"}</div>
-                    <div className="text-xs text-white/70">Avg Age</div>
+                    <div className="text-xs text-white/70">{t("academy.avgAge")}</div>
                   </div>
                 </motion.div>
 
@@ -273,7 +275,7 @@ export default function AcademyPlayers({ session }) {
                   whileTap={{ scale: 0.98 }}
                   className="ml-4 inline-flex items-center gap-2 bg-white/10 hover:bg-white/12 text-white px-4 py-2 rounded-xl border border-white/20"
                 >
-                  <UserPlus className="w-4 h-4" /> Add Player
+                  <UserPlus className="w-4 h-4" /> {t("academy.addPlayer")}
                 </motion.button>
               </div>
             </div>
@@ -285,7 +287,7 @@ export default function AcademyPlayers({ session }) {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search players..."
+                  placeholder={t("academy.searchPlayers")}
                   className="bg-transparent outline-none text-white placeholder-white/60 w-full"
                 />
                 <button
@@ -306,7 +308,7 @@ export default function AcademyPlayers({ session }) {
                     className="bg-transparent outline-none text-white w-full appearance-none cursor-pointer"
                     style={{ colorScheme: 'dark' }}
                   >
-                    <option value="" className="bg-gray-800 text-white">Filter: All positions</option>
+                    <option value="" className="bg-gray-800 text-white">{t("academy.filterAllPositions")}</option>
                     {positions.map((pos) => (
                       <option key={pos} value={pos} className="bg-gray-800 text-white">
                         {pos}
@@ -319,7 +321,7 @@ export default function AcademyPlayers({ session }) {
                   <button
                     onClick={() => setPositionFilter("")}
                     className="p-2 rounded-xl bg-white/6 text-white"
-                    title="Clear filter"
+                    title={t("academy.clearFilter")}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -335,10 +337,10 @@ export default function AcademyPlayers({ session }) {
         {/* Left column: mini analytics */}
         <aside className="space-y-4">
           <div className="bg-white/5 rounded-2xl p-4 shadow border border-white/6">
-            <h3 className="text-sm text-white/80 font-semibold">Position Breakdown</h3>
+            <h3 className="text-sm text-white/80 font-semibold">{t("academy.positionBreakdown")}</h3>
             <div className="mt-3 space-y-2">
               {Object.entries(stats.byPos).length === 0 && (
-                <div className="text-sm text-white/60">No data yet</div>
+                <div className="text-sm text-white/60">{t("academy.noDataYet")}</div>
               )}
               {Object.entries(stats.byPos).map(([pos, count]) => (
                 <div key={pos} className="flex items-center justify-between">
@@ -359,7 +361,7 @@ export default function AcademyPlayers({ session }) {
           </div>
 
           <div className="bg-white/5 rounded-2xl p-4 shadow border border-white/6">
-            <h3 className="text-sm text-white/80 font-semibold">Quick Actions</h3>
+            <h3 className="text-sm text-white/80 font-semibold">{t("academy.quickActions")}</h3>
             <div className="mt-3 flex flex-col gap-2">
               <button
                 onClick={() => {
@@ -368,7 +370,7 @@ export default function AcademyPlayers({ session }) {
                 }}
                 className="w-full py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-semibold"
               >
-                <span className="inline-flex items-center gap-2"><UserPlus className="w-4 h-4" /> Add Player</span>
+                <span className="inline-flex items-center gap-2"><UserPlus className="w-4 h-4" /> {t("academy.addPlayer")}</span>
               </button>
               <button
                 onClick={() => {
@@ -376,7 +378,7 @@ export default function AcademyPlayers({ session }) {
                 }}
                 className="w-full py-2 rounded-xl bg-white/6 text-white"
               >
-                <span className="inline-flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</span>
+                <span className="inline-flex items-center gap-2"><RefreshCw className="w-4 h-4" /> {t("academy.refresh")}</span>
               </button>
             </div>
           </div>
@@ -387,7 +389,7 @@ export default function AcademyPlayers({ session }) {
           {loading ? (
             <LoadingSkeleton rows={6} />
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl p-8 bg-white/5 text-white/70">No players found.</div>
+            <div className="rounded-2xl p-8 bg-white/5 text-white/70">{t("academy.noPlayersFound")}</div>
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -431,7 +433,7 @@ export default function AcademyPlayers({ session }) {
                         <button
                           onClick={() => doRemovePlayer(p._id)}
                           className="p-2 rounded-xl hover:bg-red-500/10 text-red-400"
-                          title="Delete player"
+                          title={t("academy.deletePlayer")}
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -477,7 +479,7 @@ export default function AcademyPlayers({ session }) {
               }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Add New Player</h3>
+                <h3 className="text-lg font-semibold text-white">{t("academy.addNewPlayer")}</h3>
                 <button onClick={() => setModalOpen(false)} className="p-2 rounded hover:bg-white/6">
                   <X className="w-4 h-4 text-white/70" />
                 </button>
@@ -489,14 +491,14 @@ export default function AcademyPlayers({ session }) {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input
                     className="col-span-2 px-4 py-3 rounded-xl bg-transparent border border-white/30 text-white placeholder-white/60 focus:bg-white/10 focus:border-white/50 transition-all"
-                    placeholder="Full name"
+                    placeholder={t("academy.fullName")}
                     value={form.name}
                     onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
                     required
                   />
                   <input
                     className="px-4 py-3 rounded-xl bg-transparent border border-white/30 text-white placeholder-white/60 focus:bg-white/10 focus:border-white/50 transition-all"
-                    placeholder="Age"
+                    placeholder={t("academy.age")}
                     type="number"
                     min={4}
                     max={99}
@@ -512,12 +514,12 @@ export default function AcademyPlayers({ session }) {
                     onChange={(e) => setForm((s) => ({ ...s, position: e.target.value }))}
                     style={{ colorScheme: 'dark' }}
                   >
-                    <option value="" className="bg-gray-800 text-white">Select position (optional)</option>
-                    <option className="bg-gray-800 text-white">Forward</option>
-                    <option className="bg-gray-800 text-white">Midfielder</option>
-                    <option className="bg-gray-800 text-white">Defender</option>
-                    <option className="bg-gray-800 text-white">Goalkeeper</option>
-                    <option className="bg-gray-800 text-white">Other</option>
+                    <option value="" className="bg-gray-800 text-white">{t("academy.selectPosition")}</option>
+                    <option className="bg-gray-800 text-white">{t("academy.forward")}</option>
+                    <option className="bg-gray-800 text-white">{t("academy.midfielder")}</option>
+                    <option className="bg-gray-800 text-white">{t("academy.defender")}</option>
+                    <option className="bg-gray-800 text-white">{t("academy.goalkeeper")}</option>
+                    <option className="bg-gray-800 text-white">{t("academy.other")}</option>
                   </select>
 
                   <label className="flex items-center gap-3 p-3 border border-white/30 rounded-xl cursor-pointer bg-transparent hover:bg-white/10 transition-all">
@@ -533,7 +535,7 @@ export default function AcademyPlayers({ session }) {
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-white/20 flex items-center justify-center text-white/80 border-2 border-white/30">
                       {avatarPreview ? <img src={avatarPreview} alt="preview" className="w-full h-full object-cover" /> : <div className="text-sm font-semibold">IMG</div>}
                     </div>
-                    <div className="text-sm text-white/90 font-medium">Upload avatar (optional)</div>
+                    <div className="text-sm text-white/90 font-medium">{t("academy.uploadAvatar")}</div>
                   </label>
                 </div>
 
@@ -545,7 +547,7 @@ export default function AcademyPlayers({ session }) {
                     }}
                     className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium transition-all border border-white/20"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="submit"
@@ -556,7 +558,7 @@ export default function AcademyPlayers({ session }) {
                         : "bg-gradient-to-r from-white/20 to-white/10 hover:from-white/30 hover:to-white/20 border border-white/30"
                     }`}
                   >
-                    {submitting ? "Saving..." : "Save Player"}
+                    {submitting ? t("academy.saving") : t("academy.savePlayer")}
                   </button>
                 </div>
               </form>

@@ -5,6 +5,7 @@ import AcademyMap from '../components/AcademyMap.jsx'
 import LocationPicker from '../components/LocationPicker.jsx'
 import { api } from '../api'
 import JoinRequestModal from '../components/JoinRequestModal.jsx'
+import { useLanguage } from '../context/LanguageContext'
 
 // ---------- Helpers ----------
 function isLatLng(obj) {
@@ -79,6 +80,7 @@ const StarRating = ({ value = 0, onChange, readOnly = false }) => {
 
 // ---------- Page ----------
 export default function Academies({ session, adminMode = false }) {
+  const { t } = useLanguage()
   const [list, setList] = useState([])
   const [query, setQuery] = useState('')
   const [adding, setAdding] = useState(false)
@@ -244,12 +246,12 @@ export default function Academies({ session, adminMode = false }) {
     <div className="mx-auto max-w-7xl px-4 py-8">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="text-3xl font-extrabold text-white">Academies / الأكاديميات</h2>
+        <h2 className="text-3xl font-extrabold text-white">{t("academies.title")}</h2>
         <div className="flex items-center gap-2">
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search / بحث"
+            placeholder={t("academies.search")}
             className="px-3 py-2 rounded-xl bg-white/10 text-white placeholder-white/60 border border-white/10 focus:outline-none"
           />
           {canEdit && (
@@ -258,7 +260,7 @@ export default function Academies({ session, adminMode = false }) {
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold shadow"
               type="button"
             >
-              <Plus size={16} />Add
+              <Plus size={16} />{t("academies.add")}
             </button>
           )}
         </div>
@@ -289,7 +291,7 @@ export default function Academies({ session, adminMode = false }) {
               </div>
               {a.verified && (
                 <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
-                  Verified
+                  {t("academies.verified")}
                 </span>
               )}
             </div>
@@ -330,12 +332,12 @@ export default function Academies({ session, adminMode = false }) {
             <div className="mt-3 flex gap-2 flex-wrap">
               {a.offersGirls && (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-pink-500/20 text-pink-300 border border-pink-400/30">
-                  Girls
+                  {t("academies.girls")}
                 </span>
               )}
               {a.offersBoys && (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                  Boys
+                  {t("academies.boys")}
                 </span>
               )}
             </div>
@@ -354,7 +356,7 @@ export default function Academies({ session, adminMode = false }) {
             {/* Training times preview */}
             {a.trainingTimes?.length > 0 && (
               <div className="mt-3 text-xs opacity-80">
-                <div className="font-semibold mb-1">⏰ Training:</div>
+                <div className="font-semibold mb-1">⏰ {t("academies.training")}:</div>
                 <ul className="list-disc list-inside space-y-0.5">
                   {a.trainingTimes.slice(0, 2).map((t, i) => (
                     <li key={i}>

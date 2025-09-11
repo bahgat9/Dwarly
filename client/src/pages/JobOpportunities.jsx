@@ -22,6 +22,7 @@ import {
   Send
 } from 'lucide-react'
 import { api } from '../api'
+import { useLanguage } from '../context/LanguageContext'
 
 // Job Application Status Badge Component
 function StatusBadge({ status }) {
@@ -440,6 +441,7 @@ function JobApplicationModal({ job, isOpen, onClose, onSubmit }) {
 
 // Main Component
 export default function JobOpportunities() {
+  const { t } = useLanguage()
   const [jobs, setJobs] = useState([])
   const [userApplications, setUserApplications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -527,11 +529,10 @@ export default function JobOpportunities() {
           className="text-center mb-8 md:mb-12"
         >
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 px-4">
-            Coaching Job Opportunities
+            {t("jobs.title")}
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto px-4">
-            Find your next coaching position at top football academies across Egypt. 
-            Apply with your CV and start your coaching journey.
+            {t("jobs.subtitle")}
           </p>
         </motion.div>
 
@@ -549,7 +550,7 @@ export default function JobOpportunities() {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-white/60" />
                   <input
                     type="text"
-                    placeholder="Search jobs, academies, or locations..."
+                    placeholder={t("jobs.search")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm md:text-base"
@@ -567,11 +568,11 @@ export default function JobOpportunities() {
                     className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none text-sm md:text-base"
                     style={{ colorScheme: 'dark' }}
                   >
-                    <option value="all" className="bg-slate-800 text-white">All Types</option>
-                    <option value="full-time" className="bg-slate-800 text-white">Full-time</option>
-                    <option value="part-time" className="bg-slate-800 text-white">Part-time</option>
-                    <option value="contract" className="bg-slate-800 text-white">Contract</option>
-                    <option value="volunteer" className="bg-slate-800 text-white">Volunteer</option>
+                    <option value="all" className="bg-slate-800 text-white">{t("jobs.allTypes")}</option>
+                    <option value="full-time" className="bg-slate-800 text-white">{t("jobs.fullTime")}</option>
+                    <option value="part-time" className="bg-slate-800 text-white">{t("jobs.partTime")}</option>
+                    <option value="contract" className="bg-slate-800 text-white">{t("jobs.contract")}</option>
+                    <option value="volunteer" className="bg-slate-800 text-white">{t("jobs.volunteer")}</option>
                   </select>
                 </div>
               </div>

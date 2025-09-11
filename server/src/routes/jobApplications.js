@@ -132,7 +132,7 @@ router.get('/check/:jobId', auth(), safeHandler(async (req, res) => {
 
 // GET /api/job-applications/:id/cv - Download CV
 router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
-  const application = await JobApplication.findById(req.params.id);
+  const application = await JobApplication.findById(req.params.id).populate('job', 'academy');
   
   if (!application) {
     return res.status(404).json({ error: 'Application not found' });
@@ -142,8 +142,14 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
   const isOwner = application.applicant.toString() === req.user.id;
   const isAcademyMember = req.user.role === 'academy';
   
-  if (!isOwner && !isAcademyMember) {
-    return res.status(403).json({ error: 'Not authorized to download this CV' });
+  // For academy members, check if they own the job that this application is for
+  let isJobOwner = false;
+  if (isAcademyMember && application.job) {
+    isJobOwner = application.job.academy.toString() === req.user.academyId;
+  }
+  
+  if (!isOwner && !isJobOwner) {
+    return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
   const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
@@ -210,7 +216,7 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
 // GET /api/job-applications/:id/cv/view - View CV in browser
 router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
   console.log('CV View endpoint hit - Application ID:', req.params.id);
-  const application = await JobApplication.findById(req.params.id);
+  const application = await JobApplication.findById(req.params.id).populate('job', 'academy');
   
   if (!application) {
     return res.status(404).json({ error: 'Application not found' });
@@ -220,7 +226,13 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
   const isOwner = application.applicant.toString() === req.user.id;
   const isAcademyMember = req.user.role === 'academy';
   
-  if (!isOwner && !isAcademyMember) {
+  // For academy members, check if they own the job that this application is for
+  let isJobOwner = false;
+  if (isAcademyMember && application.job) {
+    isJobOwner = application.job.academy.toString() === req.user.academyId;
+  }
+  
+  if (!isOwner && !isJobOwner) {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
