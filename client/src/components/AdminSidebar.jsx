@@ -45,7 +45,7 @@ const links = [
 
 export default function AdminSidebar() {
   return (
-    <aside className="w-64 bg-brand-900 border-r border-brand-800 p-4 flex flex-col">
+    <aside className="hidden md:flex w-64 bg-brand-900 border-r border-brand-800 p-4 flex-col">
       {/* Logo / title */}
       <div className="mb-8">
         <h1 className="text-xl font-bold text-white tracking-wide">

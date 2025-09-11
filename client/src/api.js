@@ -1,5 +1,8 @@
 // client/src/api.js
-const base = import.meta.env.VITE_API_URL || "https://dwarly-backend-production.up.railway.app"
+const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-backend-production.up.railway.app"
+
+// Prefer same-origin for first-party cookies when frontend proxies /api
+const base = typeof window !== "undefined" ? "" : fallbackBase
 
 export async function api(
   url,

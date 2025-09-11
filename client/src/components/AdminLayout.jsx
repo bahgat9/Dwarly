@@ -37,7 +37,7 @@ export default function AdminLayout({ session, onLogout }) {
         <AdminTopbar session={session} onLogout={onLogout} />
 
         {/* Page Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 md:p-6">
           <Outlet key={location.pathname} />
         </main>
       </div>

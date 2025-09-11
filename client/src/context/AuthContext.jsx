@@ -3,7 +3,8 @@ import { createContext, useContext, useState, useEffect } from "react"
 import axios from "axios"
 
 axios.defaults.withCredentials = true // always send cookies
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://dwarly-backend-production.up.railway.app"
+const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-backend-production.up.railway.app"
+axios.defaults.baseURL = typeof window !== "undefined" ? "" : fallbackBase
 
 const AuthContext = createContext()
 
