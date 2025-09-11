@@ -55,7 +55,7 @@ function StatusBadge({ status }) {
 }
 
 // Job Card Component
-function JobCard({ job, onApply, userApplications }) {
+function JobCard({ job, onApply, userApplications, t }) {
   // Find the most recent application for this job
   const jobApplication = userApplications?.find(app => app.job?._id === job._id)
   const applicationStatus = jobApplication?.status
@@ -638,6 +638,7 @@ export default function JobOpportunities() {
                 job={job}
                 onApply={handleApply}
                 userApplications={userApplications}
+                t={t}
               />
             ))}
           </AnimatePresence>
