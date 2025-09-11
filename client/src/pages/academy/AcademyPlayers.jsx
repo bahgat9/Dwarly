@@ -45,7 +45,7 @@ function colorForName(name = "") {
   return `linear-gradient(135deg,hsl(${hue} 80% 55%), hsl(${(hue + 40) % 360} 70% 45%))`
 }
 
-function PositionBadge({ pos }) {
+function PositionBadge({ pos, t }) {
   if (!pos) return null
   const map = {
     Forward: "bg-emerald-700/20 text-emerald-300",
@@ -54,9 +54,18 @@ function PositionBadge({ pos }) {
     Goalkeeper: "bg-amber-700/20 text-amber-300",
   }
   const cls = map[pos] || "bg-gray-600/20 text-gray-300"
+  
+  // Translate position names
+  const positionTranslations = {
+    Forward: t("jobs.forward"),
+    Midfielder: t("jobs.midfielder"),
+    Defender: t("jobs.defender"),
+    Goalkeeper: t("academy.goalkeeper"),
+  }
+  
   return (
     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${cls}`}>
-      {pos}
+      {positionTranslations[pos] || pos}
     </span>
   )
 }
@@ -238,7 +247,7 @@ export default function AcademyPlayers({ session }) {
             <div>
               <h1 className="text-4xl font-extrabold tracking-tight">{t("academy.players")}</h1>
               <p className="mt-2 text-white/80 max-w-xl">
-                {t("academy.managePlayersDesc")} — {t("academy.managePlayers")}, upload avatars, filter and analyze.
+                {t("academy.managePlayersDesc")} — {t("academy.managePlayers")}, {t("jobs.uploadAvatarsFilter")}
               </p>
               <div className="mt-4 flex items-center gap-3">
                 <motion.div
@@ -423,8 +432,8 @@ export default function AcademyPlayers({ session }) {
                             <div className="text-xs text-white/60">#{p._id?.slice(-4)}</div>
                           </div>
                           <div className="mt-1 flex items-center gap-3">
-                            <div className="text-sm text-white/60">{p.age ? `Age ${p.age}` : "Age —"}</div>
-                            <div>{<PositionBadge pos={p.position} />}</div>
+                            <div className="text-sm text-white/60">{p.age ? `${t("jobs.age")} ${p.age}` : `${t("jobs.age")} —`}</div>
+                            <div>{<PositionBadge pos={p.position} t={t} />}</div>
                           </div>
                         </div>
                       </div>
@@ -515,11 +524,11 @@ export default function AcademyPlayers({ session }) {
                     style={{ colorScheme: 'dark' }}
                   >
                     <option value="" className="bg-gray-800 text-white">{t("academy.selectPosition")}</option>
-                    <option className="bg-gray-800 text-white">{t("academy.forward")}</option>
-                    <option className="bg-gray-800 text-white">{t("academy.midfielder")}</option>
-                    <option className="bg-gray-800 text-white">{t("academy.defender")}</option>
-                    <option className="bg-gray-800 text-white">{t("academy.goalkeeper")}</option>
-                    <option className="bg-gray-800 text-white">{t("academy.other")}</option>
+                    <option value="Forward" className="bg-gray-800 text-white">{t("jobs.forward")}</option>
+                    <option value="Midfielder" className="bg-gray-800 text-white">{t("jobs.midfielder")}</option>
+                    <option value="Defender" className="bg-gray-800 text-white">{t("jobs.defender")}</option>
+                    <option value="Goalkeeper" className="bg-gray-800 text-white">{t("academy.goalkeeper")}</option>
+                    <option value="Other" className="bg-gray-800 text-white">{t("academy.other")}</option>
                   </select>
 
                   <label className="flex items-center gap-3 p-3 border border-white/30 rounded-xl cursor-pointer bg-transparent hover:bg-white/10 transition-all">

@@ -3,8 +3,10 @@ import React, { useEffect, useState } from "react";
 import { api } from "../../api";
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx";
 import { TrendingUp, Wallet, PieChart, BarChart2, Users, Calendar } from "lucide-react";
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function AcademyAnalysis({ session }) {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [finance, setFinance] = useState({ type: "income", amount: "", category: "", date: "", note: "" });
   const [financeList, setFinanceList] = useState([]);
@@ -79,10 +81,10 @@ export default function AcademyAnalysis({ session }) {
       <div>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Academy Analytics</h1>
-            <p className="text-white/70">Live KPIs on players, matches, requests, and finance.</p>
+            <h1 className="text-2xl font-bold">{t("academyAnalytics.title")}</h1>
+            <p className="text-white/70">{t("academyAnalytics.description")}</p>
           </div>
-          <button onClick={loadAll} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm">Refresh</button>
+          <button onClick={loadAll} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm">{t("academyAnalytics.refresh")}</button>
         </div>
         {error && (
           <div className="mt-3 p-3 rounded-xl bg-red-600/20 border border-red-600/40 text-red-200 text-sm">

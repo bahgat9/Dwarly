@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react"
 import { api } from "../../api"
 import Pagination from "../../components/Pagination"
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx"
+import { useLanguage } from "../../context/LanguageContext"
 
 export default function AcademyRequests({ session }) {
+  const { t } = useLanguage()
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -70,12 +72,12 @@ export default function AcademyRequests({ session }) {
 
   return (
     <div className="max-w-5xl mx-auto py-10 space-y-6">
-      <h1 className="text-2xl font-bold">📥 Join Requests</h1>
+      <h1 className="text-2xl font-bold">📥 {t("academyRequests.title")}</h1>
 
       {loading ? (
         <LoadingSkeleton lines={5} />
       ) : requests.length === 0 ? (
-        <p className="text-white/70">No join requests yet.</p>
+        <p className="text-white/70">{t("academyRequests.noRequests")}</p>
       ) : (
         <>
           <div className="space-y-3">

@@ -146,7 +146,7 @@ function JobCard({ job, onApply, userApplications }) {
         {/* Requirements */}
         {job.requirements && job.requirements.length > 0 && (
           <div>
-            <h5 className="text-sm font-semibold text-white mb-2">Requirements:</h5>
+            <h5 className="text-sm font-semibold text-white mb-2">{t("jobs.requirements")}</h5>
             <div className="flex flex-wrap gap-2">
               {job.requirements.map((req, index) => (
                 <span
@@ -164,12 +164,12 @@ function JobCard({ job, onApply, userApplications }) {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-white/60 text-xs">
             <Calendar className="w-3 h-3" />
-            <span>Posted {new Date(job.createdAt).toLocaleDateString()}</span>
+            <span>{t("jobs.posted")} {new Date(job.createdAt).toLocaleDateString()}</span>
           </div>
           {job.applicationDeadline && (
             <div className="flex items-center gap-2 text-white/60 text-xs">
               <Clock className="w-3 h-3" />
-              <span>Apply by {new Date(job.applicationDeadline).toLocaleDateString()}</span>
+              <span>{t("jobs.applyBy")} {new Date(job.applicationDeadline).toLocaleDateString()}</span>
             </div>
           )}
         </div>
@@ -209,7 +209,7 @@ function JobCard({ job, onApply, userApplications }) {
             className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center gap-2"
           >
             <Briefcase className="w-5 h-5" />
-            Apply Now
+            {t("jobs.applyNow")}
           </button>
         )}
       </div>
@@ -593,7 +593,7 @@ export default function JobOpportunities() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">{jobs.length}</div>
-                <div className="text-blue-300 text-sm">Available Jobs</div>
+                <div className="text-blue-300 text-sm">{t("jobs.availableJobs")}</div>
               </div>
             </div>
           </div>
@@ -607,7 +607,7 @@ export default function JobOpportunities() {
                 <div className="text-2xl font-bold text-white">
                   {new Set(jobs.map(job => job.academy?._id)).size}
                 </div>
-                <div className="text-green-300 text-sm">Participating Academies</div>
+                <div className="text-green-300 text-sm">{t("jobs.participatingAcademies")}</div>
               </div>
             </div>
           </div>
@@ -619,7 +619,7 @@ export default function JobOpportunities() {
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">{userApplications.length}</div>
-                <div className="text-purple-300 text-sm">Your Applications</div>
+                <div className="text-purple-300 text-sm">{t("jobs.yourApplications")}</div>
               </div>
             </div>
           </div>

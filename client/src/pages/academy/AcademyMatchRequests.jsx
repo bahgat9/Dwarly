@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, MapPin, Phone, Plus, Home, Plane, AlertTriangle } from "lucide-react";
 import MatchCardModal from "./MatchCardModal";
 import LocationPicker from "../../components/LocationPicker";
+import { useLanguage } from "../../context/LanguageContext";
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -1207,6 +1208,7 @@ function AddMatchModal({ open, onClose, onCreate, currentUser }) {
 import { useAuth } from "../../context/AuthContext"
 
 export default function AcademyMatchRequests() {
+  const { t } = useLanguage();
   const { user: session, loading } = useAuth()
   const [requests, setRequests] = useState([])
   const [openCardId, setOpenCardId] = useState(null)
@@ -1312,9 +1314,9 @@ export default function AcademyMatchRequests() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Academy Match Requests</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">{t("academyMatch.title")}</h1>
             <p className="text-white/80 text-lg">
-              Manage your match requests and find opponents
+              {t("academyMatch.description")}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -1325,7 +1327,7 @@ export default function AcademyMatchRequests() {
               className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-green-500/25 border-2 border-white/20 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              New Request
+              {t("academyMatch.newRequest")}
             </motion.button>
             <div className="text-6xl opacity-20">⚽</div>
           </div>
