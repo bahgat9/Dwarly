@@ -163,12 +163,12 @@ export default function Academies({ session, adminMode = false }) {
         body: JSON.stringify(joinForm),
       })
       setRequestStatus(created?.status || 'pending') // Use status from response or fallback to pending
-      alert("Join request sent successfully!")
+      alert(t("academies.joinRequestSent"))
       setShowJoinModal(false)
       setJoinForm({ userName: '', age: '', position: '', message: '' })
     } catch (err) {
       console.error("Failed to send join request:", err)
-      alert("Failed to send join request.")
+      alert(t("academies.joinRequestFailed"))
     } finally {
       setJoining(false)
     }
@@ -214,7 +214,7 @@ export default function Academies({ session, adminMode = false }) {
   // Delete (adminMode only)
   async function remove(id) {
     if (!adminMode) return
-    if (!window.confirm('Delete this academy?')) return
+    if (!window.confirm(t("academies.deleteConfirm"))) return
     await api('/api/academies/' + id, { method: 'DELETE' })
     setList(prev => prev.filter(a => a._id !== id))
     if (selected?._id === id) setSelected(null)
@@ -363,7 +363,7 @@ export default function Academies({ session, adminMode = false }) {
                       {typeof t === "string" ? t : `${t.day} – ${t.time}`}
                     </li>
                   ))}
-                  {a.trainingTimes.length > 2 && <li>+{a.trainingTimes.length - 2} more…</li>}
+                  {a.trainingTimes.length > 2 && <li>+{a.trainingTimes.length - 2} {t("academies.more")}</li>}
                 </ul>
               </div>
             )}
@@ -374,7 +374,7 @@ export default function Academies({ session, adminMode = false }) {
                   onClick={(e) => { e.stopPropagation(); remove(a._id) }}
                   className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-sm flex items-center gap-1 transition"
                 >
-                  🗑 Delete
+                  🗑 {t("academies.delete")}
                 </button>
               </div>
             )}
@@ -386,7 +386,7 @@ export default function Academies({ session, adminMode = false }) {
       {adding && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-2xl bg-white text-brand-800 shadow p-6">
-            <div className="text-xl font-bold mb-4">Add Academy</div>
+            <div className="text-xl font-bold mb-4">{t("academies.addAcademyModal")}</div>
             <div className="grid gap-3">
               {['name', 'nameAr', 'phone', 'locationDescription'].map(k => (
                 <input
@@ -398,19 +398,19 @@ export default function Academies({ session, adminMode = false }) {
                 />
               ))}
 
-              <label className="text-sm font-semibold">Pick Location on Map</label>
+              <label className="text-sm font-semibold">{t("academies.pickLocation")}</label>
               <LocationPicker onChange={(latlng) => setForm({ ...form, location: latlng })} />
 
-              <label className="text-sm font-semibold">Initial Rating</label>
+              <label className="text-sm font-semibold">{t("academies.initialRating")}</label>
               <StarRating value={form.rating} onChange={(v) => setForm({ ...form, rating: v })} />
 
-              <label className="text-sm font-semibold">Groups</label>
+              <label className="text-sm font-semibold">{t("academies.groups")}</label>
               <div className="flex gap-3">
-                <label><input type="checkbox" checked={form.offersGirls} onChange={e => setForm({ ...form, offersGirls: e.target.checked })} /> Girls</label>
-                <label><input type="checkbox" checked={form.offersBoys} onChange={e => setForm({ ...form, offersBoys: e.target.checked })} /> Boys</label>
+                <label><input type="checkbox" checked={form.offersGirls} onChange={e => setForm({ ...form, offersGirls: e.target.checked })} /> {t("academies.girls")}</label>
+                <label><input type="checkbox" checked={form.offersBoys} onChange={e => setForm({ ...form, offersBoys: e.target.checked })} /> {t("academies.boys")}</label>
               </div>
 
-              <label className="text-sm font-semibold">Subscription Price (EGP)</label>
+              <label className="text-sm font-semibold">{t("academies.subscriptionPrice")}</label>
               <input
                 type="number"
                 value={form.subscriptionPrice}
@@ -418,16 +418,16 @@ export default function Academies({ session, adminMode = false }) {
                 className="px-3 py-2 rounded-xl border border-brand-200"
               />
 
-              <label className="text-sm font-semibold">Training Times</label>
+              <label className="text-sm font-semibold">{t("academies.trainingTimes")}</label>
               <div className="flex gap-2">
                 <input
-                  placeholder="Day"
+                  placeholder={t("academies.day")}
                   value={newTraining.day}
                   onChange={e => setNewTraining({ ...newTraining, day: e.target.value })}
                   className="flex-1 px-3 py-2 rounded-xl border border-brand-200"
                 />
                 <input
-                  placeholder="Time"
+                  placeholder={t("academies.time")}
                   value={newTraining.time}
                   onChange={e => setNewTraining({ ...newTraining, time: e.target.value })}
                   className="flex-1 px-3 py-2 rounded-xl border border-brand-200"
@@ -444,8 +444,8 @@ export default function Academies({ session, adminMode = false }) {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setAdding(false)} className="px-4 py-2 rounded-xl bg-brand-100" type="button">Cancel</button>
-              <button onClick={add} className="px-4 py-2 rounded-xl bg-brand-800 text-white" type="button">Save</button>
+              <button onClick={() => setAdding(false)} className="px-4 py-2 rounded-xl bg-brand-100" type="button">{t("academies.cancel")}</button>
+              <button onClick={add} className="px-4 py-2 rounded-xl bg-brand-800 text-white" type="button">{t("academies.save")}</button>
             </div>
           </div>
         </div>
@@ -476,7 +476,7 @@ export default function Academies({ session, adminMode = false }) {
                   <div className="opacity-80 text-sm">{selected.nameAr}</div>
                   {selected.verified && (
                     <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
-                      Verified
+                      {t("academies.verified")}
                     </span>
                   )}
                 </div>
@@ -498,20 +498,20 @@ export default function Academies({ session, adminMode = false }) {
                       type="button"
                     >
                       {joining
-                        ? 'Joining...'
+                        ? t("academies.joining")
                         : requestStatus === 'approved'
-                          ? 'Approved'
+                          ? t("academies.approved")
                           : requestStatus === 'rejected'
-                            ? 'Rejected (Can reapply)'
+                            ? t("academies.rejected")
                             : requestStatus === 'pending'
-                              ? 'Pending'
-                              : 'Join'}
+                              ? t("academies.pending")
+                              : t("academies.join")}
                     </button>
                     <button
                       onClick={loadRequestStatus}
                       className="px-2 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition"
                       type="button"
-                      title="Refresh status"
+                      title={t("academies.refreshStatus")}
                     >
                       <RefreshCw size={16} />
                     </button>
@@ -522,7 +522,7 @@ export default function Academies({ session, adminMode = false }) {
                   className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition"
                   type="button"
                 >
-                  Close
+                  {t("academies.close")}
                 </button>
               </div>
             </div>
@@ -531,7 +531,7 @@ export default function Academies({ session, adminMode = false }) {
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               {/* Rating */}
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
-                <div className="font-semibold mb-2">⭐ Rating</div>
+                <div className="font-semibold mb-2">⭐ {t("academies.rating")}</div>
                 <div className="flex items-center gap-1 text-lg">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span key={i}>{i < (selected.rating || 0) ? "⭐" : "☆"}</span>
@@ -544,7 +544,7 @@ export default function Academies({ session, adminMode = false }) {
 
               {/* Subscription */}
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
-                <div className="font-semibold mb-2">💰 Subscription</div>
+                <div className="font-semibold mb-2">💰 {t("academies.subscription")}</div>
                 <div className="text-2xl font-bold text-accent-500">
                   {selected?.subscriptionPrice || 0} EGP
                 </div>
@@ -552,16 +552,16 @@ export default function Academies({ session, adminMode = false }) {
 
               {/* Groups */}
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
-                <div className="font-semibold mb-2">Groups</div>
+                <div className="font-semibold mb-2">{t("academies.groups")}</div>
                 <div className="flex gap-2 flex-wrap">
                   {selected?.offersGirls && (
                     <span className="px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-400/30">
-                      Girls
+                      {t("academies.girls")}
                     </span>
                   )}
                   {selected?.offersBoys && (
                     <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                      Boys
+                      {t("academies.boys")}
                     </span>
                   )}
                 </div>
@@ -569,7 +569,7 @@ export default function Academies({ session, adminMode = false }) {
 
               {/* Contact */}
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
-                <div className="font-semibold mb-2">Contact</div>
+                <div className="font-semibold mb-2">{t("academies.contact")}</div>
                 <div className="flex items-center gap-2 text-sm opacity-90">
                   <span>📍</span>
                   {selected.locationDescription || locationToText(selected.location) || "—"}
@@ -589,14 +589,14 @@ export default function Academies({ session, adminMode = false }) {
 
             {/* Map */}
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
-              <div className="font-semibold mb-2">📍 Location</div>
+                <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
               <AcademyMap query={getMapQuery(selected)} height={300} />
             </div>
 
             {/* Training Times */}
             {selected?.trainingTimes?.length > 0 && (
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
-                <div className="font-semibold mb-3">Training Times</div>
+                <div className="font-semibold mb-3">{t("academies.trainingTimes")}</div>
                 <ul className="space-y-2">
                   {(selected.trainingTimes || []).map((t, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm opacity-90">

@@ -6,8 +6,10 @@ import LocationPicker from '../components/LocationPicker.jsx'
 import AcademyMap from '../components/AcademyMap.jsx'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../api'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Matches({ session }) {
+  const { t } = useLanguage()
   const [list, setList] = useState([])
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -46,15 +48,15 @@ export default function Matches({ session }) {
 
   async function create() {
     if (!session || session.role !== 'academy') {
-      alert('Only academy accounts can publish match requests. Please contact admin to approve your academy access.')
+      alert(t("matches.onlyAcademyAccounts"))
       return
     }
     if (!form.date || !form.time) {
-      alert('Please choose date and time')
+      alert(t("matches.chooseDateTime"))
       return
     }
     if (!form.location || typeof form.location !== 'object') {
-      alert('Please pick a location on the map')
+      alert(t("matches.pickLocation"))
       return
     }
 
@@ -73,7 +75,7 @@ export default function Matches({ session }) {
       })
       setOpen(false) // close modal only after success
     } catch (e) {
-      alert(e.message || 'Failed to publish')
+      alert(e.message || t("matches.failedToPublish"))
     } finally {
       setSubmitting(false)
     }
@@ -87,7 +89,7 @@ export default function Matches({ session }) {
       })
       await load()
     } catch (e) {
-      alert(e.message || 'Failed to accept')
+      alert(e.message || t("matches.failedToAccept"))
     }
   }
 
@@ -102,10 +104,10 @@ export default function Matches({ session }) {
     <div className="min-h-screen text-brand-50">
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         <div className="flex items-center justify-between gap-4">
-          <div className="text-2xl md:text-3xl font-bold">Friendly Matches</div>
+          <div className="text-2xl md:text-3xl font-bold">{t("matches.title")}</div>
           <div className="flex items-center gap-2">
             <input
-              placeholder="Search by date, status, or U-group..."
+              placeholder={t("matches.search")}
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="px-3 py-2 rounded-xl bg-white/10 border border-white/20 backdrop-blur outline-none"
@@ -133,7 +135,7 @@ export default function Matches({ session }) {
                     >
                       <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-600 text-white shadow-lg">
                         <CheckCircle className="w-4 h-4" />
-                        <span className="text-xs font-semibold">Matched</span>
+                        <span className="text-xs font-semibold">{t("matches.matched")}</span>
                       </div>
                     </motion.div>
                   )}
@@ -158,7 +160,7 @@ export default function Matches({ session }) {
                               : 'w-6 h-6 rounded-full bg-gray-400'
                           }
                         ></div>
-                        <span className="text-xs mt-1 text-white/80 capitalize">{step}</span>
+                        <span className="text-xs mt-1 text-white/80 capitalize">{t(`matches.${step}`)}</span>
                       </motion.div>
                     )
                   })}
@@ -180,7 +182,7 @@ export default function Matches({ session }) {
                 <div className="mt-4 flex items-center justify-between">
                   {matched ? (
                     <div className="text-sm">
-                      <div className="opacity-80">Contact:</div>
+                      <div className="opacity-80">{t("matches.contact")}</div>
                       <div className="font-semibold">{m.acceptedBy?.name || '—'}</div>
                       <div>{m.acceptedBy?.phone || '—'}</div>
                     </div>
@@ -189,7 +191,7 @@ export default function Matches({ session }) {
                       onClick={() => accept(m._id)}
                       className="w-full py-2 rounded-xl bg-brand-800 text-white shadow hover:shadow-glow transition"
                     >
-                      Accept &amp; Show Contacts
+                      {t("matches.acceptAndShow")}
                     </button>
                   )}
                 </div>
@@ -214,12 +216,12 @@ export default function Matches({ session }) {
               exit={{ y: 20, opacity: 0 }}
               className="w-full max-w-lg rounded-2xl bg-white text-brand-800 shadow-xl p-6"
             >
-              <div className="text-xl font-bold mb-4">Request Friendly Match</div>
+              <div className="text-xl font-bold mb-4">{t("matches.requestMatch")}</div>
 
               <div className="grid gap-4">
                 {/* Age Group */}
                 <div>
-                  <div className="text-sm mb-2">Age Group</div>
+                  <div className="text-sm mb-2">{t("matches.ageGroup")}</div>
                   <div className="flex flex-wrap gap-2">
                     {ageGroups.map(y => (
                       <button
@@ -241,7 +243,7 @@ export default function Matches({ session }) {
                 {/* Date + Time */}
                 <div className="grid grid-cols-2 gap-3">
                   <label className="text-sm">
-                    Date
+                    {t("matches.date")}
                     <input
                       type="date"
                       value={form.date}
@@ -250,7 +252,7 @@ export default function Matches({ session }) {
                     />
                   </label>
                   <label className="text-sm">
-                    Time
+                    {t("matches.time")}
                     <input
                       type="time"
                       value={form.time}
@@ -262,7 +264,7 @@ export default function Matches({ session }) {
 
                 {/* Home / Away */}
                 <div>
-                  <div className="text-sm mb-2">Home / Away</div>
+                  <div className="text-sm mb-2">{t("matches.homeAway")}</div>
                   <div className="flex gap-2">
                     {['home', 'away'].map(v => (
                       <button
@@ -275,7 +277,7 @@ export default function Matches({ session }) {
                             : 'bg-white text-brand-800')
                         }
                       >
-                        {v.toUpperCase()}
+                        {t(`matches.${v}`)}
                       </button>
                     ))}
                   </div>
@@ -283,7 +285,7 @@ export default function Matches({ session }) {
 
                 {/* Location Picker */}
                 <div className="text-sm">
-                  Location
+                  {t("matches.location")}
                   <div className="mt-2 rounded-2xl overflow-hidden border border-brand-200">
                     <LocationPicker onChange={pos => setForm(prev => ({ ...prev, location: pos }))} />
                   </div>
@@ -293,14 +295,14 @@ export default function Matches({ session }) {
               {/* Actions */}
               <div className="mt-5 flex justify-end gap-2">
                 <button onClick={() => setOpen(false)} className="px-4 py-2 rounded-xl bg-brand-100">
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   disabled={submitting}
                   onClick={create}
                   className="px-4 py-2 rounded-xl bg-brand-800 text-white"
                 >
-                  {submitting ? 'Publishing...' : 'Publish'}
+                  {submitting ? t("matches.publishing") : t("matches.publish")}
                 </button>
               </div>
             </motion.div>

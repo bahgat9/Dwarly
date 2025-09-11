@@ -97,20 +97,20 @@ export default function Home(){
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
               <InfoCard 
                 icon={<Shield className="w-8 h-8" />} 
-                title="Verified" 
-                text="AI-powered verification system" 
+                title={t("home.verified")} 
+                text={t("home.verifiedDesc")} 
                 delay={0.1}
               />
               <InfoCard 
                 icon={<Star className="w-8 h-8" />} 
-                title="Rated" 
-                text="Community-driven ratings" 
+                title={t("home.rated")} 
+                text={t("home.ratedDesc")} 
                 delay={0.2}
               />
               <InfoCard 
                 icon={<Users className="w-8 h-8" />} 
-                title="Connected" 
-                text="Seamless matchmaking" 
+                title={t("home.connected")} 
+                text={t("home.connectedDesc")} 
                 delay={0.3}
               />
             </div>
@@ -132,7 +132,7 @@ export default function Home(){
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-brand-900 to-transparent p-8">
                 <div className="text-3xl font-black text-white mb-2">DWARLY / دورلي</div>
-                <div className="text-accent-400 font-semibold">Elevating Egyptian Football Talent</div>
+                <div className="text-accent-400 font-semibold">{t("home.elevatingEgyptian")}</div>
               </div>
             </div>
           </motion.div>
@@ -172,18 +172,18 @@ export default function Home(){
             />
             <FeatureHighlight
               icon={<Shield />}
-              title="Verified Profiles"
-              description="All academies are verified and rated by our community"
+              title={t("home.verifiedProfiles")}
+              description={t("home.verifiedProfilesDesc")}
             />
             <FeatureHighlight
               icon={<Trophy />}
-              title="Performance Tracking"
-              description="Monitor academy performance and player development"
+              title={t("home.performanceTracking")}
+              description={t("home.performanceTrackingDesc")}
             />
             <FeatureHighlight
               icon={<Star />}
-              title="Community Ratings"
-              description="Real reviews and ratings from players and parents"
+              title={t("home.communityRatings")}
+              description={t("home.communityRatingsDesc")}
             />
           </div>
         </div>

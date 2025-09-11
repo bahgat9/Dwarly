@@ -7,6 +7,7 @@ import Select from "react-select"
 import { api } from "../api"
 import LoadingSkeleton from "../components/LoadingSkeleton.jsx"
 import LocationPicker from "../components/LocationPicker.jsx"
+import { useLanguage } from "../context/LanguageContext"
 
 const yearOptions = Array.from({ length: 2021 - 2005 + 1 }, (_, i) => {
   const year = 2005 + i
@@ -15,6 +16,7 @@ const yearOptions = Array.from({ length: 2021 - 2005 + 1 }, (_, i) => {
 
 export default function AdminAcademies({ session }) {
   const nav = useNavigate()
+  const { t } = useLanguage()
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -72,7 +74,7 @@ export default function AdminAcademies({ session }) {
       setList(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error("Failed to load academies:", err)
-      setError("Failed to load academies. Please try again.")
+      setError(t("adminAcademies.failedToLoad"))
     } finally {
       setLoading(false)
     }
@@ -160,7 +162,7 @@ export default function AdminAcademies({ session }) {
     setSaving(true)
     try {
       if (!form.name || form.name.trim() === "") {
-        alert("Name is required to create an academy.")
+        alert(t("adminAcademies.nameRequired"))
         setSaving(false)
         return
       }
@@ -170,7 +172,7 @@ export default function AdminAcademies({ session }) {
       resetForm()
     } catch (err) {
       console.error(err)
-      alert("Failed to create academy.")
+      alert(t("adminAcademies.failedToCreate"))
     } finally {
       setSaving(false)
     }
@@ -185,26 +187,26 @@ export default function AdminAcademies({ session }) {
       setEditing(null)
     } catch (err) {
       console.error(err)
-      alert("Failed to update academy.")
+      alert(t("adminAcademies.failedToUpdate"))
     } finally {
       setSaving(false)
     }
   }
 
   async function remove(id) {
-    if (!window.confirm("Are you sure you want to delete this academy?")) return
+    if (!window.confirm(t("adminAcademies.confirmDelete"))) return
     try {
       await api("/api/academies/" + id, { method: "DELETE" })
       setList((prev) => prev.filter((a) => a._id !== id))
     } catch (err) {
-      alert("Failed to delete academy.")
+      alert(t("adminAcademies.failedToDelete"))
     }
   }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 text-white">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="text-3xl font-extrabold">Admin • Academies</h2>
+        <h2 className="text-3xl font-extrabold">{t("adminAcademies.title")}</h2>
         <button
           onClick={() => {
             resetForm()
@@ -213,7 +215,7 @@ export default function AdminAcademies({ session }) {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-accent-500 text-brand-900 font-semibold shadow hover:bg-accent-600 transition"
         >
           <Plus size={16} />
-          Add Academy
+          {t("adminAcademies.addAcademy")}
         </button>
       </div>
 
@@ -222,7 +224,7 @@ export default function AdminAcademies({ session }) {
         <div className="mt-6 bg-red-500/20 text-red-400 p-6 rounded-xl">
           {error}
           <button onClick={load} className="ml-4 px-3 py-1 bg-red-500 text-white rounded-xl">
-            Retry
+            {t("adminAcademies.retry")}
           </button>
         </div>
       )}
@@ -262,7 +264,7 @@ export default function AdminAcademies({ session }) {
                   </div>
                   {a.verified && (
                     <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
-                      Verified
+                      {t("adminAcademies.verified")}
                     </span>
                   )}
                 </div>
@@ -294,12 +296,12 @@ export default function AdminAcademies({ session }) {
                 <div className="mt-3 flex gap-2 flex-wrap">
                   {a.offersGirls && (
                     <span className="px-2 py-0.5 text-xs rounded-full bg-pink-500/20 text-pink-300 border border-pink-400/30">
-                      Girls
+                      {t("adminAcademies.girls")}
                     </span>
                   )}
                   {a.offersBoys && (
                     <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                      Boys
+                      {t("adminAcademies.boys")}
                     </span>
                   )}
                 </div>
@@ -318,7 +320,7 @@ export default function AdminAcademies({ session }) {
                 {/* Training times preview */}
                 {a.trainingTimes?.length > 0 && (
                   <div className="mt-3 text-xs opacity-80">
-                    <div className="font-semibold mb-1">Training:</div>
+                    <div className="font-semibold mb-1">{t("adminAcademies.trainingTimes")}:</div>
                     <ul className="list-disc list-inside space-y-0.5">
                       {a.trainingTimes.slice(0, 2).map((t, i) => (
                         <li key={i}>
@@ -346,13 +348,13 @@ export default function AdminAcademies({ session }) {
                     }}
                     className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-sm transition"
                   >
-                    Edit
+                    {t("adminAcademies.edit")}
                   </button>
                   <button
                     onClick={() => remove(a._id)}
                     className="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 text-sm flex items-center gap-1 transition"
                   >
-                    <Trash2 size={14} /> Delete
+                    <Trash2 size={14} /> {t("adminAcademies.delete")}
                   </button>
                 </div>
               </div>
@@ -367,17 +369,17 @@ export default function AdminAcademies({ session }) {
                 onClick={() => setPage((p) => p - 1)}
                 className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-40 transition"
               >
-                Prev
+                {t("adminAcademies.prev")}
               </button>
               <span className="text-sm">
-                Page {page} of {totalPages}
+                {t("adminAcademies.page")} {page} {t("adminAcademies.of")} {totalPages}
               </span>
               <button
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-40 transition"
               >
-                Next
+                {t("adminAcademies.next")}
               </button>
             </div>
           )}
@@ -398,55 +400,55 @@ export default function AdminAcademies({ session }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-xl font-bold mb-4 text-accent-500">
-              {adding ? "Add Academy" : "Edit Academy"}
+              {adding ? t("adminAcademies.addAcademyModal") : t("adminAcademies.editAcademyModal")}
             </div>
             <div className="grid gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Name (English)*</label>
+                  <label className="block text-sm font-medium mb-1">{t("adminAcademies.nameEnglish")}</label>
                   <input
                     value={form.name ?? ""}
                     onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder="Academy Name"
+                    placeholder={t("adminAcademies.academyName")}
                     required
                     className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Name (Arabic)</label>
+                  <label className="block text-sm font-medium mb-1">{t("adminAcademies.nameArabic")}</label>
                   <input
                     value={form.nameAr ?? ""}
                     onChange={(e) => setForm((prev) => ({ ...prev, nameAr: e.target.value }))}
-                    placeholder="اسم الأكاديمية"
+                    placeholder={t("adminAcademies.academyNameAr")}
                     className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Phone</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.phone")}</label>
                 <input
                   value={form.phone ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-                  placeholder="Phone Number"
+                  placeholder={t("adminAcademies.phoneNumber")}
                   className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Contact Email</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.contactEmail")}</label>
                 <input
                   value={form.contact ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, contact: e.target.value }))}
-                  placeholder="Contact Email"
+                  placeholder={t("adminAcademies.contactEmail")}
                   className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.description")}</label>
                 <textarea
-                  placeholder="Academy Description"
+                  placeholder={t("adminAcademies.academyDescription")}
                   value={form.description ?? ""}
                   onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
@@ -455,19 +457,19 @@ export default function AdminAcademies({ session }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Location Description</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.locationDescription")}</label>
                 <input
                   value={form.locationDescription ?? ""}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, locationDescription: e.target.value }))
                   }
-                  placeholder="Location Description"
+                  placeholder={t("adminAcademies.locationDescription")}
                   className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Location</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.location")}</label>
                 <div className="rounded-xl bg-brand-700 border border-brand-600 overflow-hidden">
                   <LocationPicker
                     onChange={(geo) => setForm((prev) => ({ ...prev, locationGeo: geo }))}
@@ -482,7 +484,7 @@ export default function AdminAcademies({ session }) {
 
               {/* Rating stars */}
               <div className="flex items-center gap-2">
-                <span className="font-medium">Rating:</span>
+                <span className="font-medium">{t("adminAcademies.rating")}</span>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <button
                     key={i}
@@ -497,7 +499,7 @@ export default function AdminAcademies({ session }) {
 
               {/* Multi-select dropdown for ages */}
               <div>
-                <label className="block text-sm font-medium mb-1">Available Ages</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.availableAges")}</label>
                 <Select
                   isMulti
                   options={yearOptions}
@@ -520,7 +522,7 @@ export default function AdminAcademies({ session }) {
                     onChange={(e) => setForm((prev) => ({ ...prev, verified: e.target.checked }))}
                     className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
                   />
-                  <span>Verified</span>
+                  <span>{t("adminAcademies.verified")}</span>
                 </label>
 
                 <label className="inline-flex items-center gap-2">
@@ -530,7 +532,7 @@ export default function AdminAcademies({ session }) {
                     onChange={(e) => setForm({ ...form, offersGirls: e.target.checked })}
                     className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
                   />
-                  <span>Girls</span>
+                  <span>{t("adminAcademies.girls")}</span>
                 </label>
 
                 <label className="inline-flex items-center gap-2">
@@ -540,12 +542,12 @@ export default function AdminAcademies({ session }) {
                     onChange={(e) => setForm({ ...form, offersBoys: e.target.checked })}
                     className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
                   />
-                  <span>Boys</span>
+                  <span>{t("adminAcademies.boys")}</span>
                 </label>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Subscription price (EGP)</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.subscriptionPrice")}</label>
                 <input
                   type="number"
                   value={form.subscriptionPrice ?? 0}
@@ -561,7 +563,7 @@ export default function AdminAcademies({ session }) {
 
               {/* Training times */}
               <div>
-                <div className="font-semibold mb-2">Training times</div>
+                <div className="font-semibold mb-2">{t("adminAcademies.trainingTimes")}</div>
                 <button
                   type="button"
                   className="px-3 py-1 rounded-xl bg-brand-700 hover:bg-brand-600 text-white text-sm mb-2"
@@ -572,13 +574,13 @@ export default function AdminAcademies({ session }) {
                     }))
                   }
                 >
-                  Add time
+                  {t("adminAcademies.addTime")}
                 </button>
                 {(form.trainingTimes || []).map((t, i) => (
                   <div key={i} className="grid grid-cols-2 gap-2 mt-2">
                     <input
                       className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                      placeholder="Day"
+                      placeholder={t("adminAcademies.day")}
                       value={t.day ?? ""}
                       onChange={(e) => {
                         const arr = [...(form.trainingTimes || [])]
@@ -588,7 +590,7 @@ export default function AdminAcademies({ session }) {
                     />
                     <input
                       className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                      placeholder="Time"
+                      placeholder={t("adminAcademies.time")}
                       value={t.time ?? ""}
                       onChange={(e) => {
                         const arr = [...(form.trainingTimes || [])]
@@ -602,7 +604,7 @@ export default function AdminAcademies({ session }) {
 
               {/* Logo upload (file) */}
               <div>
-                <label className="block text-sm font-medium mb-1">Logo / Image</label>
+                <label className="block text-sm font-medium mb-1">{t("adminAcademies.logoImage")}</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -618,19 +620,19 @@ export default function AdminAcademies({ session }) {
                   {logoPreviewUrl ? (
                     <img
                       src={logoPreviewUrl}
-                      alt="Preview"
+                      alt={t("adminAcademies.preview")}
                       className="w-20 h-20 object-cover rounded-xl border border-brand-600"
                     />
                   ) : editing && editing.logo ? (
                     <img
                       src={editing.logo}
-                      alt="Current logo"
+                      alt={t("adminAcademies.currentLogo")}
                       className="w-20 h-20 object-cover rounded-xl border border-brand-600"
                     />
                   ) : null}
                 </div>
                 {form.logoFile && (
-                  <p className="text-xs text-gray-400 mt-1">Selected: {form.logoFile.name}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("adminAcademies.selected")} {form.logoFile.name}</p>
                 )}
               </div>
 
@@ -643,7 +645,7 @@ export default function AdminAcademies({ session }) {
                   className="px-4 py-2 rounded-xl border border-brand-600 text-white hover:bg-brand-700 transition"
                   disabled={saving}
                 >
-                  Cancel
+                  {t("adminAcademies.cancel")}
                 </button>
                 {adding ? (
                   <button
@@ -651,7 +653,7 @@ export default function AdminAcademies({ session }) {
                     disabled={saving}
                     className="px-4 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold hover:bg-accent-600 disabled:opacity-50 transition"
                   >
-                    {saving ? "Creating..." : "Create"}
+                    {saving ? t("adminAcademies.creating") : t("adminAcademies.create")}
                   </button>
                 ) : (
                   <button
@@ -659,7 +661,7 @@ export default function AdminAcademies({ session }) {
                     disabled={saving}
                     className="px-4 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold hover:bg-accent-600 disabled:opacity-50 transition"
                   >
-                    {saving ? "Saving..." : "Save"}
+                    {saving ? t("adminAcademies.saving") : t("adminAcademies.save")}
                   </button>
                 )}
               </div>

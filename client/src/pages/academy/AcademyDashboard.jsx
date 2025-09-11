@@ -138,7 +138,7 @@ export default function AcademyDashboard({ session }) {
       // Check if academyId exists
       if (!session?.academyId) {
         console.error("No academyId found in session:", session)
-        setError("Academy information is missing. Please contact an administrator to link your account to an academy.")
+        setError(t("academy.academyInfoMissing"))
         setLoading(false)
         return
       }
@@ -226,10 +226,10 @@ export default function AcademyDashboard({ session }) {
           <div className="flex items-center gap-4">
             <div className="text-4xl">⚠️</div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-white mb-2">Configuration Required</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{t("academy.configurationRequired")}</h3>
               <p className="text-white/80">{error}</p>
               <p className="text-white/70 text-sm mt-2">
-                To resolve this issue, please contact an administrator to properly link your academy account to an academy.
+                {t("academy.contactAdminToResolve")}
               </p>
             </div>
           </div>

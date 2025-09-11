@@ -22,7 +22,7 @@ export default function NavBar({ session, onLogout }){
           {session ? (
             <div className="flex items-center gap-3">
               <div className="text-sm text-white/70">
-                {session.role === 'admin' ? 'Admin' : session.role === 'academy' ? 'Academy' : 'User'}
+                {session.role === 'admin' ? t('admin.panel') : session.role === 'academy' ? t('academy.panel') : t('common.user')}
               </div>
               <button 
                 onClick={onLogout} 
@@ -46,7 +46,7 @@ export default function NavBar({ session, onLogout }){
         <button 
           className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors duration-200" 
           onClick={()=>setOpen(v=>!v)}
-          aria-label="Toggle menu"
+          aria-label={t("common.open")}
         >
           {open? <X size={20}/>:<Menu size={20}/>}
         </button>
@@ -61,7 +61,7 @@ export default function NavBar({ session, onLogout }){
           {session ? (
             <div className="space-y-2">
               <div className="px-3 py-2 text-sm text-white/70">
-                {session.role === 'admin' ? 'Admin' : session.role === 'academy' ? 'Academy' : 'User'}
+                {session.role === 'admin' ? t('admin.panel') : session.role === 'academy' ? t('academy.panel') : t('common.user')}
               </div>
               <button 
                 onClick={()=>{onLogout(); setOpen(false);}} 
