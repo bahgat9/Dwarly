@@ -25,6 +25,8 @@ import Match from './models/Match.js'
 import Job from './models/Job.js'
 
 const app = express()
+// Ensure correct secure cookie behavior behind proxies (Railway)
+app.set('trust proxy', 1)
 
 // --- Middleware
 app.use(express.json({ limit: "5mb" }))
@@ -34,17 +36,19 @@ app.use(morgan('dev'))
 
 // --- CORS setup
 const allowedOrigins = [
-  "https://dwarly.vercel.app", // Production frontend
-  "https://dwarly-frontend.vercel.app", // Alternative Vercel URL
-  "http://localhost:5173",     // Local dev
-  "http://localhost:3000",     // Alternative local dev
+  "https://dwarly.vercel.app",
+  "https://dwarly-frontend.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
 ]
 
 app.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true) // allow Postman/curl
-      if (allowedOrigins.includes(origin)) {
+      // Allow Vercel preview subdomains
+      const isVercelPreview = /https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+      if (allowedOrigins.includes(origin) || isVercelPreview) {
         return callback(null, true)
       } else {
         console.warn("❌ Blocked CORS request from:", origin)

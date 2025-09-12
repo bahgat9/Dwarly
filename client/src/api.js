@@ -1,12 +1,10 @@
 // client/src/api.js
 const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-production.up.railway.app"
 
-// Use proxy in dev (localhost), absolute backend URL in production
+// Always use relative path in browser so cookies are first-party via Vercel rewrites
 let base = fallbackBase
 if (typeof window !== "undefined") {
-  const origin = window.location.origin
-  const isLocalhost = /localhost|127\.0\.0\.1/i.test(origin)
-  base = isLocalhost ? "" : fallbackBase
+  base = ""
 }
 
 export async function api(
