@@ -110,7 +110,20 @@ export default function App() {
         <AnimatePresence mode="wait" initial={false}>
           <Routes location={location} key={location.pathname}>
             {/* --- Public Pages --- */}
-            <Route path="/" element={<Page><Home /></Page>} />
+            <Route
+              path="/"
+              element={
+                <Page>
+                  {session?.role === "academy" ? (
+                    <Navigate to="/academy/dashboard" replace />
+                  ) : session?.role === "admin" ? (
+                    <Navigate to="/admin/dashboard" replace />
+                  ) : (
+                    <Home />
+                  )}
+                </Page>
+              }
+            />
             <Route path="/academies" element={<Page><Academies session={session} /></Page>} />
             <Route path="/matches" element={<Page><JobOpportunities /></Page>} />
             <Route path="/login" element={<Page><Login academies={academies} /></Page>} />

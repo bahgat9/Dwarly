@@ -21,8 +21,14 @@ import {
 } from 'lucide-react'
 import { api } from '../../api'
 
-// Get the API base URL (same as used in api.js)
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:4000"
+// Get the API base URL (same logic as api.js)
+const FALLBACK_BASE = import.meta.env.VITE_API_URL || "https://dwarly-production.up.railway.app"
+let API_BASE = FALLBACK_BASE
+if (typeof window !== 'undefined') {
+  const origin = window.location.origin
+  const isLocalhost = /localhost|127\.0\.0\.1/i.test(origin)
+  API_BASE = isLocalhost ? '' : FALLBACK_BASE
+}
 
 // Job Status Badge
 function JobStatusBadge({ status }) {

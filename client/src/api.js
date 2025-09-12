@@ -1,8 +1,13 @@
 // client/src/api.js
 const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-production.up.railway.app"
 
-// Prefer same-origin for first-party cookies when frontend proxies /api
-const base = typeof window !== "undefined" ? "" : fallbackBase
+// Use proxy in dev (localhost), absolute backend URL in production
+let base = fallbackBase
+if (typeof window !== "undefined") {
+  const origin = window.location.origin
+  const isLocalhost = /localhost|127\.0\.0\.1/i.test(origin)
+  base = isLocalhost ? "" : fallbackBase
+}
 
 export async function api(
   url,

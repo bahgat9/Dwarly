@@ -8,19 +8,14 @@
 import mongoose from 'mongoose';
 import User from './src/models/User.js';
 import Academy from './src/models/Academy.js';
-import dotenv from 'dotenv';
-
-// Load environment variables
-dotenv.config();
 
 async function createAcademyAccounts() {
   try {
-    // Connect to MongoDB
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      console.error('❌ Missing MONGODB_URI in .env');
-      process.exit(1);
-    }
+    // Connect to MongoDB - you'll need to provide your MongoDB URI
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/dwarly';
+    
+    console.log('🔗 Connecting to MongoDB...');
+    console.log('📝 Note: If this fails, you may need to set MONGODB_URI environment variable');
 
     await mongoose.connect(uri);
     console.log('✅ Connected to MongoDB');

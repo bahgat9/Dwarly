@@ -4,7 +4,13 @@ import axios from "axios"
 
 axios.defaults.withCredentials = true // always send cookies
 const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-production.up.railway.app"
-axios.defaults.baseURL = typeof window !== "undefined" ? "" : fallbackBase
+if (typeof window !== "undefined") {
+  const origin = window.location.origin
+  const isLocalhost = /localhost|127\.0\.0\.1/i.test(origin)
+  axios.defaults.baseURL = isLocalhost ? "" : fallbackBase
+} else {
+  axios.defaults.baseURL = fallbackBase
+}
 
 const AuthContext = createContext()
 
