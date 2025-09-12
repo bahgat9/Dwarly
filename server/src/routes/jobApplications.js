@@ -13,23 +13,28 @@ import Job from '../models/Job.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { safeHandler } from '../utils/safeHandler.js';
+import cloudinary from '../utils/cloudinary.js';
 
 const router = express.Router();
 
-// Configure multer for CV uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/cvs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}-${file.originalname}`;
-    cb(null, uniqueName);
-  }
-});
+// Configure multer for CV uploads (memory storage if Cloudinary configured)
+const useCloudinary = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+
+const storage = useCloudinary
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../../uploads/cvs');
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueName = `${uuidv4()}-${file.originalname}`;
+        cb(null, uniqueName);
+      }
+    });
 
 const upload = multer({
   storage: storage,
@@ -167,6 +172,11 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
+  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it for download
+  if (/^https?:\/\//i.test(application.cvUrl || '')) {
+    return res.redirect(302, application.cvUrl)
+  }
+
   const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
   
   console.log('CV Download - File path:', cvPath);
@@ -266,6 +276,11 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
+  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it for in-browser viewing
+  if (/^https?:\/\//i.test(application.cvUrl || '')) {
+    return res.redirect(302, application.cvUrl)
+  }
+
   const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
   
   console.log('CV View - File path:', cvPath);
@@ -388,8 +403,28 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     // If status is 'rejected', allow them to apply again
   }
   
-  // Create CV URL
-  const cvUrl = `/uploads/cvs/${req.file.filename}`;
+  // Create CV URL (Cloudinary or local)
+  let cvUrl = ''
+  let originalName = req.file.originalname
+  if (useCloudinary) {
+    const uploaded = await cloudinary.uploader.upload_stream
+      ? await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream({ folder: 'dwarly/cvs', resource_type: 'raw' }, (error, result) => {
+            if (error) return reject(error)
+            resolve(result)
+          })
+          stream.end(req.file.buffer)
+        })
+      : null
+    if (uploaded?.secure_url) {
+      cvUrl = uploaded.secure_url
+      // Keep originalName
+    } else {
+      return res.status(500).json({ error: 'Failed to upload CV file' })
+    }
+  } else {
+    cvUrl = `/uploads/cvs/${req.file.filename}`
+  }
   
   const application = new JobApplication({
     job: jobId,
@@ -398,7 +433,7 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     experience: experience || '',
     qualifications: qualifications || '',
     cvUrl,
-    cvFileName: req.file.originalname
+    cvFileName: originalName
   });
   
   await application.save();
