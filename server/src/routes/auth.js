@@ -188,6 +188,8 @@ router.get("/session", auth(false), async (req, res) => {
           { $set: { academyId: linked._id, academyName: linked.name } },
           { new: true }
         ).select("-password");
+        // Re-issue cookie token with academyId
+        setToken(res, user);
       }
     }
 

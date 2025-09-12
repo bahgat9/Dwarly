@@ -5,9 +5,8 @@ import axios from "axios"
 axios.defaults.withCredentials = true // always send cookies
 const fallbackBase = import.meta.env.VITE_API_URL || "https://dwarly-production.up.railway.app"
 if (typeof window !== "undefined") {
-  const origin = window.location.origin
-  const isLocalhost = /localhost|127\.0\.0\.1/i.test(origin)
-  axios.defaults.baseURL = isLocalhost ? "" : fallbackBase
+  // Always use relative in browser so calls go through Vercel rewrites (first-party cookies)
+  axios.defaults.baseURL = ""
 } else {
   axios.defaults.baseURL = fallbackBase
 }
@@ -34,6 +33,13 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await axios.get("/api/auth/session")
         setUser(res.data.user)
+        // If server re-issued token on session, store it
+        if (res.data.token) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dwarly_token', res.data.token)
+          }
+          setToken(res.data.token)
+        }
       } catch (err) {
         console.error("AuthContext session error:", err)
         setUser(null)
