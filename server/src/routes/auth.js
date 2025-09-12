@@ -118,13 +118,20 @@ router.post("/login", async (req, res) => {
     // 🔧 Auto-link academy account if missing academyId
     if (user.role === "academy" && !user.academyId) {
       let linked = null;
-      const candidateName = user.academyName || user.name;
+      const candidateName = (user.academyName || user.name || "").trim();
       if (candidateName) {
         linked = await Academy.findOne({
           $or: [
             { name: new RegExp("^" + candidateName + "$", "i") },
             { nameAr: new RegExp("^" + candidateName + "$", "i") },
           ],
+        });
+      }
+      if (!linked && candidateName) {
+        // Auto-provision minimal academy to unblock login, mark unverified
+        linked = await Academy.create({
+          name: candidateName,
+          verified: false,
         });
       }
       if (linked) {
@@ -162,7 +169,7 @@ router.get("/session", auth(false), async (req, res) => {
     // 🔧 Auto-link on session as well
     if (user.role === "academy" && !user.academyId) {
       let linked = null;
-      const candidateName = user.academyName || user.name;
+      const candidateName = (user.academyName || user.name || "").trim();
       if (candidateName) {
         linked = await Academy.findOne({
           $or: [
@@ -170,6 +177,9 @@ router.get("/session", auth(false), async (req, res) => {
             { nameAr: new RegExp("^" + candidateName + "$", "i") },
           ],
         });
+      }
+      if (!linked && candidateName) {
+        linked = await Academy.create({ name: candidateName, verified: false });
       }
       if (linked) {
         user = await User.findByIdAndUpdate(
