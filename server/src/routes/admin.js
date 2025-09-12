@@ -139,6 +139,78 @@ router.delete(
 );
 
 /**
+ * List academy accounts (Users with role 'academy')
+ */
+router.get(
+  "/academy-accounts",
+  safeHandler(async (req, res) => {
+    const query = User.find({ role: 'academy' })
+      .select("-password")
+      .populate('academyId', 'name nameAr logo');
+    const result = await paginate(query, req);
+    res.json({ success: true, ...result });
+  })
+);
+
+/**
+ * Create academy account (User with role 'academy')
+ */
+router.post(
+  "/academy-accounts",
+  safeHandler(async (req, res) => {
+    const { academyId, email, password, name, phone } = req.body;
+    
+    if (!academyId || !email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Academy ID, email, and password are required" 
+      });
+    }
+    
+    // Check if academy exists
+    const academy = await Academy.findById(academyId);
+    if (!academy) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "Academy not found" 
+      });
+    }
+    
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ 
+        success: false, 
+        error: "Email already exists" 
+      });
+    }
+    
+    // Create academy account
+    const academyUser = await User.create({
+      name: name || academy.name,
+      email: email.toLowerCase(),
+      password,
+      phone: phone || academy.phone,
+      role: 'academy',
+      academyId: academy._id,
+      academyName: academy.name
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: {
+        id: academyUser._id,
+        name: academyUser.name,
+        email: academyUser.email,
+        role: academyUser.role,
+        academyId: academyUser.academyId,
+        academyName: academyUser.academyName
+      }
+    });
+  })
+);
+
+/**
  * List all matches (paginated + sortable)
  */
 router.get(
