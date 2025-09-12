@@ -109,11 +109,30 @@ router.post("/login", async (req, res) => {
     const email = (req.body?.email ?? "").trim().toLowerCase();
     const password = (req.body?.password ?? "").trim();
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const ok = await user.comparePassword(password);
     if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+
+    // 🔧 Auto-link academy account if missing academyId
+    if (user.role === "academy" && !user.academyId) {
+      let linked = null;
+      const candidateName = user.academyName || user.name;
+      if (candidateName) {
+        linked = await Academy.findOne({
+          $or: [
+            { name: new RegExp("^" + candidateName + "$", "i") },
+            { nameAr: new RegExp("^" + candidateName + "$", "i") },
+          ],
+        });
+      }
+      if (linked) {
+        user.academyId = linked._id;
+        user.academyName = linked.name;
+        await user.save();
+      }
+    }
 
     setToken(res, user);
 
@@ -137,8 +156,29 @@ router.post("/login", async (req, res) => {
 router.get("/session", auth(false), async (req, res) => {
   if (!req.user) return res.json({ user: null });
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    let user = await User.findById(req.user.id).select("-password");
     if (!user) return res.json({ user: null });
+
+    // 🔧 Auto-link on session as well
+    if (user.role === "academy" && !user.academyId) {
+      let linked = null;
+      const candidateName = user.academyName || user.name;
+      if (candidateName) {
+        linked = await Academy.findOne({
+          $or: [
+            { name: new RegExp("^" + candidateName + "$", "i") },
+            { nameAr: new RegExp("^" + candidateName + "$", "i") },
+          ],
+        });
+      }
+      if (linked) {
+        user = await User.findByIdAndUpdate(
+          req.user.id,
+          { $set: { academyId: linked._id, academyName: linked.name } },
+          { new: true }
+        ).select("-password");
+      }
+    }
 
     res.json({
       user: {
