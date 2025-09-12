@@ -206,8 +206,8 @@ function ApplicationsModal({ job, isOpen, onClose }) {
       const viewUrl = `${API_BASE}/api/job-applications/${applicationId}/cv/view`
       console.log('Opening CV in browser:', viewUrl)
       
-      // Open in new tab
-      window.open(viewUrl, '_blank')
+      // On mobile, opening in the same tab is more reliable for cookies/popups
+      window.location.href = viewUrl
       
     } catch (err) {
       console.error('Failed to open CV:', err)
