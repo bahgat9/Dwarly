@@ -11,12 +11,20 @@ export async function api(
   url,
   { method = "GET", body, headers = {}, ...rest } = {}
 ) {
+  // Add Authorization header if token exists (Safari fallback)
+  let authHeaders = headers
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('dwarly_token')
+    if (token) {
+      authHeaders = { ...headers, Authorization: `Bearer ${token}` }
+    }
+  }
   const isFormData =
     typeof FormData !== "undefined" && body instanceof FormData
 
   const finalHeaders = isFormData
     ? headers // let browser set multipart boundaries
-    : { "Content-Type": "application/json", ...headers }
+    : { "Content-Type": "application/json", ...authHeaders }
 
   const finalBody =
     body == null

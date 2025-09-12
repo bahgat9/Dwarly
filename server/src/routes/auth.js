@@ -84,7 +84,7 @@ router.post(["/register", "/signup"], async (req, res) => {
       academyName: resolvedAcademyName || undefined,
     });
 
-    setToken(res, user);
+    const token = setToken(res, user);
 
     res.json({
       user: {
@@ -96,6 +96,7 @@ router.post(["/register", "/signup"], async (req, res) => {
         academyId: user.academyId,
         academyName: user.academyName,
       },
+      token,
     });
   } catch (e) {
     console.error("Signup error:", e);

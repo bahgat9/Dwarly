@@ -17,6 +17,16 @@ const AuthContext = createContext()
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [token, setToken] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('dwarly_token') : null))
+
+  // Attach token to axios if present
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    } else {
+      delete axios.defaults.headers.common['Authorization']
+    }
+  }, [token])
 
   // Fetch current session on mount
   useEffect(() => {
@@ -37,6 +47,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await axios.post("/api/auth/login", { email, password })
     setUser(res.data.user)
+    if (res.data.token) {
+      setToken(res.data.token)
+      if (typeof window !== 'undefined') localStorage.setItem('dwarly_token', res.data.token)
+    }
     return res.data.user
   }
 
@@ -55,6 +69,8 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await axios.post("/api/auth/logout")
     setUser(null)
+    setToken(null)
+    if (typeof window !== 'undefined') localStorage.removeItem('dwarly_token')
   }
 
   const getRole = () => user?.role || null
