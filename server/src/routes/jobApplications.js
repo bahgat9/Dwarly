@@ -209,18 +209,12 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
   
   // Set headers for proper download
   res.setHeader('Content-Type', mimeType);
-  
-  // Properly encode the filename for Content-Disposition header
-  const encodedFilename = encodeURIComponent(application.cvFileName);
-  res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFilename}; filename="${application.cvFileName}"`);
   res.setHeader('Cache-Control', 'no-cache');
   
   console.log('CV Download - Application ID:', req.params.id);
   console.log('CV Download - Original filename:', application.cvFileName);
-  console.log('CV Download - Encoded filename:', encodedFilename);
-  console.log('CV Download - Content-Disposition header:', `attachment; filename*=UTF-8''${encodedFilename}; filename="${application.cvFileName}"`);
   
-  // Use res.download() for more reliable file serving
+  // Use res.download() with proper filename - this will set the correct Content-Disposition header
   try {
     res.download(cvPath, application.cvFileName, (err) => {
       if (err) {
@@ -315,7 +309,6 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
   
   // Set headers for viewing in browser
   res.setHeader('Content-Type', mimeType);
-  res.setHeader('Content-Disposition', `inline; filename="${application.cvFileName}"`);
   res.setHeader('Cache-Control', 'no-cache');
   
   // Use res.sendFile for more reliable file serving
