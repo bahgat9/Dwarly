@@ -129,6 +129,44 @@ router.get('/test-direct-url', auth(), safeHandler(async (req, res) => {
   }
 }));
 
+// Test endpoint to generate signed URL for the problematic file
+router.get('/test-signed-url', auth(), safeHandler(async (req, res) => {
+  try {
+    const publicId = 'dwarly/cvs/cv_1757800086444_Bahgat_s_CV__1_';
+    
+    console.log('Generating signed URL for public_id:', publicId);
+    
+    // Generate signed URL
+    const signedUrl = cloudinary.url(publicId, {
+      resource_type: 'raw',
+      secure: true,
+      sign_url: true
+    });
+    
+    console.log('Generated signed URL:', signedUrl);
+    
+    // Test the signed URL
+    const response = await fetch(signedUrl);
+    
+    res.json({
+      success: true,
+      publicId: publicId,
+      signedUrl: signedUrl,
+      testResult: {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      }
+    });
+  } catch (error) {
+    console.error('Signed URL test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}));
+
 // List all applications for debugging - MUST be first
 router.get('/list-all', auth(), safeHandler(async (req, res) => {
   try {
@@ -411,14 +449,32 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // All CVs are now stored on Cloudinary - redirect to the URL directly
+  // All CVs are now stored on Cloudinary - generate signed URL for access
   if (!application.cvUrl || !/^https?:\/\//i.test(application.cvUrl)) {
     console.error('CV URL is not a valid Cloudinary URL:', application.cvUrl);
     return res.status(404).json({ error: 'CV file not found or invalid URL' });
   }
 
-  console.log('CV Download - Redirecting to Cloudinary URL:', application.cvUrl);
-  return res.redirect(302, application.cvUrl);
+  try {
+    // Extract public_id from the URL
+    const urlParts = application.cvUrl.split('/');
+    const publicId = urlParts[urlParts.length - 1].replace('.pdf', '');
+    
+    // Generate signed URL for secure access
+    const signedUrl = cloudinary.url(publicId, {
+      resource_type: 'raw',
+      secure: true,
+      sign_url: true
+    });
+    
+    console.log('CV Download - Generated signed URL:', signedUrl);
+    return res.redirect(302, signedUrl);
+  } catch (error) {
+    console.error('CV Download - Error generating signed URL:', error);
+    // Fallback to original URL
+    console.log('CV Download - Fallback to original URL:', application.cvUrl);
+    return res.redirect(302, application.cvUrl);
+  }
 }));
 
 // GET /api/job-applications/:id/cv/view - View CV in browser
@@ -466,14 +522,32 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // All CVs are now stored on Cloudinary - redirect to the URL directly
+  // All CVs are now stored on Cloudinary - generate signed URL for access
   if (!application.cvUrl || !/^https?:\/\//i.test(application.cvUrl)) {
     console.error('CV URL is not a valid Cloudinary URL:', application.cvUrl);
     return res.status(404).json({ error: 'CV file not found or invalid URL' });
   }
 
-  console.log('CV View - Redirecting to Cloudinary URL:', application.cvUrl);
-  return res.redirect(302, application.cvUrl);
+  try {
+    // Extract public_id from the URL
+    const urlParts = application.cvUrl.split('/');
+    const publicId = urlParts[urlParts.length - 1].replace('.pdf', '');
+    
+    // Generate signed URL for secure access
+    const signedUrl = cloudinary.url(publicId, {
+      resource_type: 'raw',
+      secure: true,
+      sign_url: true
+    });
+    
+    console.log('CV View - Generated signed URL:', signedUrl);
+    return res.redirect(302, signedUrl);
+  } catch (error) {
+    console.error('CV View - Error generating signed URL:', error);
+    // Fallback to original URL
+    console.log('CV View - Fallback to original URL:', application.cvUrl);
+    return res.redirect(302, application.cvUrl);
+  }
 }));
 
 
