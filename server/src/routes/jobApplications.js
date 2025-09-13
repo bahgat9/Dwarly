@@ -213,6 +213,12 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
   
   console.log('CV Download - Application ID:', req.params.id);
   console.log('CV Download - Original filename:', application.cvFileName);
+  console.log('CV Download - CV URL:', application.cvUrl);
+  console.log('CV Download - Full application data:', JSON.stringify({
+    cvFileName: application.cvFileName,
+    cvUrl: application.cvUrl,
+    id: application._id
+  }, null, 2));
   
   // Use res.download() with proper filename - this will set the correct Content-Disposition header
   try {
@@ -399,10 +405,22 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
   // Create CV URL (Cloudinary or local)
   let cvUrl = ''
   let originalName = req.file.originalname
+  
+  console.log('CV Upload Debug:', {
+    originalName: originalName,
+    filename: req.file.filename,
+    useCloudinary: useCloudinary,
+    fileSize: req.file.size
+  });
+  
   if (useCloudinary) {
     const uploaded = await cloudinary.uploader.upload_stream
       ? await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream({ folder: 'dwarly/cvs', resource_type: 'raw' }, (error, result) => {
+          const stream = cloudinary.uploader.upload_stream({ 
+            folder: 'dwarly/cvs', 
+            resource_type: 'raw',
+            public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}` // Include original name in public_id
+          }, (error, result) => {
             if (error) return reject(error)
             resolve(result)
           })
@@ -411,12 +429,13 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
       : null
     if (uploaded?.secure_url) {
       cvUrl = uploaded.secure_url
-      // Keep originalName
+      console.log('CV Upload - Cloudinary URL:', cvUrl);
     } else {
       return res.status(500).json({ error: 'Failed to upload CV file' })
     }
   } else {
     cvUrl = `/uploads/cvs/${req.file.filename}`
+    console.log('CV Upload - Local URL:', cvUrl);
   }
   
   const application = new JobApplication({
@@ -430,6 +449,13 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
   });
   
   await application.save();
+  
+  console.log('CV Upload - Saved application:', {
+    id: application._id,
+    cvFileName: application.cvFileName,
+    cvUrl: application.cvUrl
+  });
+  
   await application.populate('job', 'title academy location type ageGroup');
   await application.populate({
     path: 'job',
