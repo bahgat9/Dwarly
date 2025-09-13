@@ -201,17 +201,25 @@ function ApplicationsModal({ job, isOpen, onClose }) {
 
   const downloadCV = async (applicationId) => {
     try {
-      // Open CV in browser instead of downloading to avoid corruption issues
-      // Use the same base URL as API calls for consistency
-      const viewUrl = `${API_BASE}/api/job-applications/${applicationId}/cv/view`
-      console.log('Opening CV in browser:', viewUrl)
+      // Fetch the CV through the API with proper authentication
+      const response = await api(`/api/job-applications/${applicationId}/cv/view`, {
+        method: 'GET'
+      })
       
-      // Open in new tab to avoid navigation issues
-      window.open(viewUrl, '_blank')
+      // The API client now returns a blob for file responses
+      if (response instanceof Blob) {
+        const blobUrl = URL.createObjectURL(response)
+        window.open(blobUrl, '_blank')
+        // Clean up the blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+      } else {
+        console.error('Unexpected response type:', typeof response)
+        alert('Failed to open CV - unexpected response format')
+      }
       
     } catch (err) {
       console.error('Failed to open CV:', err)
-      alert('Failed to open CV')
+      alert(`Failed to open CV: ${err.message}`)
     }
   }
 

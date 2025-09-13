@@ -44,6 +44,20 @@ export async function api(
   })
 
   const contentType = res.headers.get("content-type") || ""
+  
+  // Handle file responses (PDFs, images, etc.)
+  if (contentType.includes("application/pdf") || 
+      contentType.includes("application/msword") || 
+      contentType.includes("application/vnd.openxmlformats-officedocument") ||
+      contentType.includes("image/") ||
+      contentType.includes("application/octet-stream")) {
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => "")
+      throw new Error(errorText || "Request failed")
+    }
+    return res.blob()
+  }
+
   const parseJson = () =>
     contentType.includes("application/json") ? res.json() : null
 

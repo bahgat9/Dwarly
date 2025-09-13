@@ -225,6 +225,11 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
       
     } catch (error) {
       console.error('CV Download - Error fetching from Cloudinary:', error);
+      console.error('CV Download - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        cvUrl: application.cvUrl
+      });
       return res.status(500).json({ error: 'Failed to fetch CV file from storage' });
     }
   }
@@ -362,6 +367,11 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
       
     } catch (error) {
       console.error('CV View - Error fetching from Cloudinary:', error);
+      console.error('CV View - Error details:', {
+        message: error.message,
+        stack: error.stack,
+        cvUrl: application.cvUrl
+      });
       return res.status(500).json({ error: 'Failed to fetch CV file from storage' });
     }
   }
