@@ -17,7 +17,7 @@ export default function NavBar({ session, onLogout }){
         </Link>
         <div className="hidden md:flex items-center gap-4 text-white">
           <NavLink to="/academies" label={t("nav.academies")} />
-          <NavLink to="/matches" label={t("nav.jobs")} />
+          <NavLink to="/job-opportunities" label={t("nav.jobs")} />
           <LanguageToggle />
           {session ? (
             <div className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export default function NavBar({ session, onLogout }){
       {open && (
         <div className="md:hidden px-3 pb-4 text-white space-y-3 bg-brand-800/95 backdrop-blur-md border-t border-white/10">
           <MobileLink to="/academies" label={t("nav.academies")} onClick={()=>setOpen(false)} />
-          <MobileLink to="/matches" label={t("nav.jobs")} onClick={()=>setOpen(false)} />
+          <MobileLink to="/job-opportunities" label={t("nav.jobs")} onClick={()=>setOpen(false)} />
           <div className="px-3 py-2">
             <LanguageToggle />
           </div>

@@ -125,7 +125,7 @@ export default function App() {
               }
             />
             <Route path="/academies" element={<Page><Academies session={session} /></Page>} />
-            <Route path="/matches" element={<Page><JobOpportunities /></Page>} />
+            <Route path="/job-opportunities" element={<Page><JobOpportunities /></Page>} />
             <Route path="/login" element={<Page><Login academies={academies} /></Page>} />
             <Route path="/signup" element={<Page><Signup academies={academies} /></Page>} />
             <Route path="/academy-request" element={<Page><AcademyAccessRequest /></Page>} />

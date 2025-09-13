@@ -350,7 +350,7 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     }
   } catch (error) {
     console.error('CV Upload - Cloudinary upload failed:', error);
-    throw new Error('Failed to upload CV to Cloudinary. Please try again.');
+    throw new Error(`Failed to upload CV to Cloudinary: ${error.message}`);
   }
   
   const application = new JobApplication({

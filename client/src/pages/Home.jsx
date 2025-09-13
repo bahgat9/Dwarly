@@ -87,7 +87,7 @@ export default function Home(){
                 🔍 {t("public.findAcademies")}
               </Link>
               <Link 
-                to="/matches" 
+                to="/job-opportunities" 
                 className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-white/10 text-white font-bold text-base md:text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 text-center"
               >
                 💼 {t("public.jobOpportunities")}
