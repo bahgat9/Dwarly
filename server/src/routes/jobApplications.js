@@ -336,20 +336,43 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
   
   // Upload to Cloudinary (required)
   try {
-    const result = await cloudinary.uploader.upload(req.file.buffer, {
+    // Validate file buffer
+    if (!req.file.buffer || req.file.buffer.length === 0) {
+      throw new Error('Invalid file buffer');
+    }
+    
+    // Convert buffer to base64 data URI for Cloudinary
+    const base64String = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64String}`;
+    
+    console.log('CV Upload - Uploading to Cloudinary...', {
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      originalName: originalName
+    });
+    
+    const result = await cloudinary.uploader.upload(dataUri, {
       folder: 'dwarly/cvs',
       resource_type: 'raw',
-      public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
+      use_filename: false,
+      unique_filename: true
     });
     
     if (result && result.secure_url) {
       cvUrl = result.secure_url;
-      console.log('CV Upload - Cloudinary URL:', cvUrl);
+      console.log('CV Upload - Success! Cloudinary URL:', cvUrl);
     } else {
+      console.error('CV Upload - No secure_url in result:', result);
       throw new Error('No secure_url returned from Cloudinary');
     }
   } catch (error) {
     console.error('CV Upload - Cloudinary upload failed:', error);
+    console.error('CV Upload - Error details:', {
+      message: error.message,
+      status: error.http_code,
+      name: error.name
+    });
     throw new Error(`Failed to upload CV to Cloudinary: ${error.message}`);
   }
   
@@ -411,22 +434,39 @@ router.put('/:id', auth(), upload.single('cv'), safeHandler(async (req, res) => 
   if (req.file) {
     // Upload new CV to Cloudinary
     try {
-      const result = await cloudinary.uploader.upload(req.file.buffer, {
+      // Validate file buffer
+      if (!req.file.buffer || req.file.buffer.length === 0) {
+        throw new Error('Invalid file buffer');
+      }
+      
+      // Convert buffer to base64 data URI for Cloudinary
+      const base64String = req.file.buffer.toString('base64');
+      const dataUri = `data:${req.file.mimetype};base64,${base64String}`;
+      
+      console.log('CV Update - Uploading to Cloudinary...', {
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        originalName: req.file.originalname
+      });
+      
+      const result = await cloudinary.uploader.upload(dataUri, {
         folder: 'dwarly/cvs',
         resource_type: 'raw',
-        public_id: `cv_${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        public_id: `cv_${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
+        use_filename: false,
+        unique_filename: true
       });
       
       if (result && result.secure_url) {
         application.cvUrl = result.secure_url;
         application.cvFileName = req.file.originalname;
-        console.log('CV Update - New Cloudinary URL:', result.secure_url);
+        console.log('CV Update - Success! New Cloudinary URL:', result.secure_url);
       } else {
         throw new Error('No secure_url returned from Cloudinary');
       }
     } catch (error) {
       console.error('CV Update - Cloudinary upload failed:', error);
-      return res.status(500).json({ error: 'Failed to upload new CV to Cloudinary. Please try again.' });
+      return res.status(500).json({ error: `Failed to upload new CV to Cloudinary: ${error.message}` });
     }
   }
   
