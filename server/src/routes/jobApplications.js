@@ -17,32 +17,6 @@ import cloudinary from '../utils/cloudinary.js';
 
 const router = express.Router();
 
-// Test endpoint to check Cloudinary URL accessibility
-router.get('/test-cloudinary/:id', auth(), safeHandler(async (req, res) => {
-  const application = await JobApplication.findById(req.params.id);
-  if (!application) {
-    return res.status(404).json({ error: 'Application not found' });
-  }
-  
-  console.log('Testing Cloudinary URL:', application.cvUrl);
-  
-  try {
-    const fileBuffer = await fetchFileFromUrl(application.cvUrl);
-    res.json({
-      success: true,
-      url: application.cvUrl,
-      size: fileBuffer.length,
-      filename: application.cvFileName
-    });
-  } catch (error) {
-    console.error('Cloudinary test failed:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      url: application.cvUrl
-    });
-  }
-}));
 
 // Removed unused fetchFileFromUrl function - using direct redirects now
 
@@ -70,6 +44,116 @@ const upload = multer({
     }
   }
 });
+
+// Test endpoint to check Cloudinary configuration - MUST be first
+router.get('/test-cloudinary-config', auth(), safeHandler(async (req, res) => {
+  try {
+    // Test Cloudinary configuration
+    const config = {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+    };
+    
+    console.log('Cloudinary Config Test:', config);
+    
+    // Test upload a small text file
+    const testResult = await cloudinary.uploader.upload('data:text/plain;base64,SGVsbG8gV29ybGQ=', {
+      folder: 'dwarly/test',
+      resource_type: 'raw',
+      public_id: `test_${Date.now()}`
+    });
+    
+    res.json({
+      success: true,
+      config: config,
+      testUpload: {
+        url: testResult.secure_url,
+        public_id: testResult.public_id
+      }
+    });
+  } catch (error) {
+    console.error('Cloudinary config test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      config: {
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
+      }
+    });
+  }
+}));
+
+// List all applications for debugging - MUST be first
+router.get('/list-all', auth(), safeHandler(async (req, res) => {
+  try {
+    const applications = await JobApplication.find({})
+      .populate('job', 'title academy')
+      .populate('applicant', 'name email')
+      .select('_id cvUrl cvFileName createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    res.json({
+      success: true,
+      count: applications.length,
+      applications: applications.map(app => ({
+        id: app._id,
+        cvUrl: app.cvUrl,
+        cvFileName: app.cvFileName,
+        createdAt: app.createdAt,
+        jobTitle: app.job?.title,
+        applicantName: app.applicant?.name
+      }))
+    });
+  } catch (error) {
+    console.error('List applications failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+}));
+
+// Test endpoint to check specific CV URL - MUST be first
+router.get('/test-cv-url/:id', auth(), safeHandler(async (req, res) => {
+  try {
+    const application = await JobApplication.findById(req.params.id);
+    if (!application) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    
+    console.log('Testing CV URL:', application.cvUrl);
+    
+    // Test if the URL is accessible
+    const response = await fetch(application.cvUrl);
+    if (response.ok) {
+      res.json({
+        success: true,
+        url: application.cvUrl,
+        status: response.status,
+        filename: application.cvFileName
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        url: application.cvUrl,
+        status: response.status,
+        statusText: response.statusText,
+        error: `HTTP ${response.status}: ${response.statusText}`
+      });
+    }
+  } catch (error) {
+    console.error('CV URL test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      url: application?.cvUrl || 'Unknown'
+    });
+  }
+}));
 
 // GET /api/job-applications/my - Get user's applications
 router.get('/my', auth(), safeHandler(async (req, res) => {
@@ -256,6 +340,7 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
   return res.redirect(302, application.cvUrl);
 }));
 
+
 // GET /api/job-applications/:id - Get specific application
 router.get('/:id', auth(), safeHandler(async (req, res) => {
   const application = await JobApplication.findById(req.params.id)
@@ -348,20 +433,50 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     console.log('CV Upload - Uploading to Cloudinary...', {
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
-      originalName: originalName
+      originalName: originalName,
+      bufferLength: req.file.buffer.length
     });
     
-    const result = await cloudinary.uploader.upload(dataUri, {
+    const uploadOptions = {
       folder: 'dwarly/cvs',
       resource_type: 'raw',
       public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
       use_filename: false,
-      unique_filename: true
+      unique_filename: true,
+      overwrite: false
+    };
+    
+    console.log('CV Upload - Upload options:', uploadOptions);
+    
+    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
+    
+    console.log('CV Upload - Cloudinary response:', {
+      public_id: result.public_id,
+      secure_url: result.secure_url,
+      format: result.format,
+      resource_type: result.resource_type,
+      bytes: result.bytes
     });
     
     if (result && result.secure_url) {
       cvUrl = result.secure_url;
       console.log('CV Upload - Success! Cloudinary URL:', cvUrl);
+      
+      // Test the URL immediately after upload
+      try {
+        const testResponse = await fetch(cvUrl);
+        console.log('CV Upload - URL test result:', {
+          status: testResponse.status,
+          ok: testResponse.ok,
+          statusText: testResponse.statusText
+        });
+        
+        if (!testResponse.ok) {
+          console.warn('CV Upload - URL test failed, but upload succeeded:', testResponse.status);
+        }
+      } catch (testError) {
+        console.warn('CV Upload - URL test error:', testError.message);
+      }
     } else {
       console.error('CV Upload - No secure_url in result:', result);
       throw new Error('No secure_url returned from Cloudinary');
@@ -371,7 +486,8 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     console.error('CV Upload - Error details:', {
       message: error.message,
       status: error.http_code,
-      name: error.name
+      name: error.name,
+      stack: error.stack
     });
     throw new Error(`Failed to upload CV to Cloudinary: ${error.message}`);
   }
