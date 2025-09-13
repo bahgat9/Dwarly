@@ -64,13 +64,29 @@ router.get('/test-cloudinary-config', auth(), safeHandler(async (req, res) => {
       public_id: `test_${Date.now()}`
     });
     
+    // Test the uploaded URL immediately
+    let urlTest = null;
+    try {
+      const testResponse = await fetch(testResult.secure_url);
+      urlTest = {
+        status: testResponse.status,
+        ok: testResponse.ok,
+        statusText: testResponse.statusText
+      };
+    } catch (urlError) {
+      urlTest = {
+        error: urlError.message
+      };
+    }
+    
     res.json({
       success: true,
       config: config,
       testUpload: {
         url: testResult.secure_url,
         public_id: testResult.public_id
-      }
+      },
+      urlTest: urlTest
     });
   } catch (error) {
     console.error('Cloudinary config test failed:', error);
@@ -82,6 +98,33 @@ router.get('/test-cloudinary-config', auth(), safeHandler(async (req, res) => {
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING'
       }
+    });
+  }
+}));
+
+// Test endpoint to check a specific Cloudinary URL directly
+router.get('/test-direct-url', auth(), safeHandler(async (req, res) => {
+  try {
+    const testUrl = 'https://res.cloudinary.com/dd3fgcbgb/raw/upload/v1757800087/dwarly/cvs/cv_1757800086444_Bahgat_s_CV__1_.pdf';
+    
+    console.log('Testing direct URL:', testUrl);
+    
+    const response = await fetch(testUrl);
+    
+    res.json({
+      success: true,
+      url: testUrl,
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+  } catch (error) {
+    console.error('Direct URL test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      url: 'https://res.cloudinary.com/dd3fgcbgb/raw/upload/v1757800087/dwarly/cvs/cv_1757800086444_Bahgat_s_CV__1_.pdf'
     });
   }
 }));
@@ -151,6 +194,99 @@ router.get('/test-cv-url/:id', auth(), safeHandler(async (req, res) => {
       success: false,
       error: error.message,
       url: application?.cvUrl || 'Unknown'
+    });
+  }
+}));
+
+// Test endpoint to upload a new CV and test it immediately
+router.post('/test-upload-cv', auth(), upload.single('cv'), safeHandler(async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    console.log('Test CV Upload - Starting...', {
+      fileSize: req.file.size,
+      mimeType: req.file.mimetype,
+      originalName: req.file.originalname
+    });
+
+    // Convert buffer to base64 data URI for Cloudinary
+    const base64String = req.file.buffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64String}`;
+    
+    const uploadOptions = {
+      folder: 'dwarly/test-cvs',
+      resource_type: 'raw',
+      public_id: `test_cv_${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`,
+      use_filename: false,
+      unique_filename: true,
+      overwrite: false
+    };
+    
+    console.log('Test CV Upload - Upload options:', uploadOptions);
+    
+    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
+    
+    console.log('Test CV Upload - Cloudinary response:', {
+      public_id: result.public_id,
+      secure_url: result.secure_url,
+      format: result.format,
+      resource_type: result.resource_type,
+      bytes: result.bytes
+    });
+    
+    if (result && result.secure_url) {
+      // Test the URL immediately after upload
+      try {
+        const testResponse = await fetch(result.secure_url);
+        console.log('Test CV Upload - URL test result:', {
+          status: testResponse.status,
+          ok: testResponse.ok,
+          statusText: testResponse.statusText
+        });
+        
+        res.json({
+          success: true,
+          uploadResult: {
+            public_id: result.public_id,
+            secure_url: result.secure_url,
+            format: result.format,
+            bytes: result.bytes
+          },
+          urlTest: {
+            status: testResponse.status,
+            ok: testResponse.ok,
+            statusText: testResponse.statusText
+          }
+        });
+      } catch (testError) {
+        res.json({
+          success: true,
+          uploadResult: {
+            public_id: result.public_id,
+            secure_url: result.secure_url,
+            format: result.format,
+            bytes: result.bytes
+          },
+          urlTest: {
+            error: testError.message
+          }
+        });
+      }
+    } else {
+      throw new Error('No secure_url returned from Cloudinary');
+    }
+  } catch (error) {
+    console.error('Test CV Upload failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: {
+        message: error.message,
+        status: error.http_code,
+        name: error.name
+      }
     });
   }
 }));
