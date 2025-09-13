@@ -3,7 +3,6 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import https from 'https';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -45,53 +44,7 @@ router.get('/test-cloudinary/:id', auth(), safeHandler(async (req, res) => {
   }
 }));
 
-// Helper function to fetch file from URL using https
-const fetchFileFromUrl = (url) => {
-  return new Promise((resolve, reject) => {
-    console.log('Fetching file from URL:', url);
-    
-    const request = https.get(url, (response) => {
-      console.log('HTTPS Response status:', response.statusCode);
-      console.log('HTTPS Response headers:', response.headers);
-      
-      if (response.statusCode !== 200) {
-        reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
-        return;
-      }
-      
-      const chunks = [];
-      let totalSize = 0;
-      
-      response.on('data', (chunk) => {
-        chunks.push(chunk);
-        totalSize += chunk.length;
-        console.log('Received chunk, total size so far:', totalSize);
-      });
-      
-      response.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        console.log('File fetch completed, total size:', buffer.length);
-        resolve(buffer);
-      });
-      
-      response.on('error', (error) => {
-        console.error('Response error:', error);
-        reject(error);
-      });
-    });
-    
-    request.on('error', (error) => {
-      console.error('Request error:', error);
-      reject(error);
-    });
-    
-    request.setTimeout(30000, () => {
-      console.error('Request timeout');
-      request.destroy();
-      reject(new Error('Request timeout'));
-    });
-  });
-};
+// Removed unused fetchFileFromUrl function - using direct redirects now
 
 // Configure multer for CV uploads (memory storage if Cloudinary configured)
 const useCloudinary = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
@@ -248,60 +201,10 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // If cvUrl is a remote URL (e.g., Cloudinary), fetch and serve it through our server
+  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it directly
   if (/^https?:\/\//i.test(application.cvUrl || '')) {
-    try {
-      console.log('CV Download - Fetching from Cloudinary:', application.cvUrl);
-      
-      // Validate URL format
-      if (!application.cvUrl.includes('cloudinary.com')) {
-        console.error('CV Download - Invalid Cloudinary URL format:', application.cvUrl);
-        return res.status(400).json({ error: 'Invalid file URL format' });
-      }
-      
-      // Check if URL is complete (not truncated)
-      if (application.cvUrl.length < 50) {
-        console.error('CV Download - URL appears to be truncated:', application.cvUrl);
-        return res.status(400).json({ error: 'File URL appears to be incomplete' });
-      }
-      
-      // Fetch the file from Cloudinary
-      const fileBuffer = await fetchFileFromUrl(application.cvUrl);
-      
-      // Get file extension and set appropriate MIME type
-      const ext = path.extname(application.cvFileName).toLowerCase();
-      const mimeTypes = {
-        '.pdf': 'application/pdf',
-        '.doc': 'application/msword',
-        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      };
-      
-      const mimeType = mimeTypes[ext] || 'application/octet-stream';
-      
-      // Set headers for proper download
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Cache-Control', 'no-cache');
-      
-      console.log('CV Download - Serving Cloudinary file:', {
-        originalName: application.cvFileName,
-        mimeType: mimeType,
-        size: fileBuffer.length
-      });
-      
-      // Send the file buffer with proper filename
-      res.setHeader('Content-Disposition', `attachment; filename="${application.cvFileName}"`);
-      res.send(fileBuffer);
-      return;
-      
-    } catch (error) {
-      console.error('CV Download - Error fetching from Cloudinary:', error);
-      console.error('CV Download - Error details:', {
-        message: error.message,
-        stack: error.stack,
-        cvUrl: application.cvUrl
-      });
-      return res.status(500).json({ error: 'Failed to fetch CV file from storage' });
-    }
+    console.log('CV Download - Redirecting to Cloudinary URL:', application.cvUrl);
+    return res.redirect(302, application.cvUrl);
   }
 
   const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
@@ -410,68 +313,10 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // If cvUrl is a remote URL (e.g., Cloudinary), fetch and serve it through our server
+  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it directly
   if (/^https?:\/\//i.test(application.cvUrl || '')) {
-    try {
-      console.log('CV View - Fetching from Cloudinary:', application.cvUrl);
-      
-      // Validate URL format
-      if (!application.cvUrl.includes('cloudinary.com')) {
-        console.error('CV View - Invalid Cloudinary URL format:', application.cvUrl);
-        return res.status(400).json({ error: 'Invalid file URL format' });
-      }
-      
-      // Check if URL is complete (not truncated)
-      if (application.cvUrl.length < 50) {
-        console.error('CV View - URL appears to be truncated:', application.cvUrl);
-        return res.status(400).json({ error: 'File URL appears to be incomplete' });
-      }
-      
-      // Fetch the file from Cloudinary
-      const fileBuffer = await fetchFileFromUrl(application.cvUrl);
-      
-      // Get file extension and set appropriate MIME type
-      const ext = path.extname(application.cvFileName).toLowerCase();
-      const mimeTypes = {
-        '.pdf': 'application/pdf',
-        '.doc': 'application/msword',
-        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      };
-      
-      const mimeType = mimeTypes[ext] || 'application/octet-stream';
-      
-      // Set headers for viewing in browser
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Cache-Control', 'no-cache');
-      
-      console.log('CV View - Serving Cloudinary file:', {
-        originalName: application.cvFileName,
-        mimeType: mimeType,
-        size: fileBuffer.length
-      });
-      
-      // Send the file buffer
-      res.send(fileBuffer);
-      return;
-      
-    } catch (error) {
-      console.error('CV View - Error fetching from Cloudinary:', error);
-      console.error('CV View - Error details:', {
-        message: error.message,
-        stack: error.stack,
-        cvUrl: application.cvUrl
-      });
-      
-      // Try to serve from local storage as fallback
-      console.log('CV View - Attempting fallback to local storage...');
-      const localPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
-      if (fs.existsSync(localPath)) {
-        console.log('CV View - Found local file, serving from local storage');
-        return res.sendFile(localPath);
-      }
-      
-      return res.status(500).json({ error: 'Failed to fetch CV file from storage' });
-    }
+    console.log('CV View - Redirecting to Cloudinary URL:', application.cvUrl);
+    return res.redirect(302, application.cvUrl);
   }
 
   const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
@@ -607,26 +452,37 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
   });
   
   if (useCloudinary) {
-    const uploaded = await cloudinary.uploader.upload_stream
-      ? await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream({ 
-            folder: 'dwarly/cvs', 
-            resource_type: 'raw',
-            public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}` // Include original name in public_id
-          }, (error, result) => {
-            if (error) return reject(error)
-            resolve(result)
-          })
-          stream.end(req.file.buffer)
-        })
-      : null
-    if (uploaded?.secure_url) {
-      cvUrl = uploaded.secure_url
-      console.log('CV Upload - Cloudinary URL:', cvUrl);
-      console.log('CV Upload - Cloudinary URL length:', cvUrl.length);
-    } else {
-      console.error('CV Upload - Cloudinary upload failed:', uploaded);
-      return res.status(500).json({ error: 'Failed to upload CV file' })
+    try {
+      // Use a simpler upload approach
+      const result = await cloudinary.uploader.upload(req.file.buffer, {
+        folder: 'dwarly/cvs',
+        resource_type: 'raw',
+        public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      });
+      
+      if (result && result.secure_url) {
+        cvUrl = result.secure_url;
+        console.log('CV Upload - Cloudinary URL:', cvUrl);
+        console.log('CV Upload - Cloudinary URL length:', cvUrl.length);
+      } else {
+        throw new Error('No secure_url returned from Cloudinary');
+      }
+    } catch (error) {
+      console.error('CV Upload - Cloudinary upload failed:', error);
+      // Fallback to local storage
+      const localFilename = `${Date.now()}_${originalName}`;
+      const localPath = path.join(__dirname, '../../uploads/cvs', localFilename);
+      
+      // Ensure directory exists
+      const uploadDir = path.join(__dirname, '../../uploads/cvs');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      // Save file locally
+      fs.writeFileSync(localPath, req.file.buffer);
+      cvUrl = `/uploads/cvs/${localFilename}`;
+      console.log('CV Upload - Fallback to local storage:', cvUrl);
     }
   } else {
     cvUrl = `/uploads/cvs/${req.file.filename}`

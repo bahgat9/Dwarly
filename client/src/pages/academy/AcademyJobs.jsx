@@ -201,45 +201,23 @@ function ApplicationsModal({ job, isOpen, onClose }) {
 
   const downloadCV = async (applicationId) => {
     try {
-      // Try direct Railway URL first to bypass Vercel rewrite issues
-      const directUrl = `https://dwarly-production.up.railway.app/api/job-applications/${applicationId}/cv/view`
-      console.log('Trying direct Railway URL:', directUrl)
+      // Get the CV URL from the application data first
+      const response = await api(`/api/job-applications/${applicationId}`)
       
-      // Create a temporary link with authentication
-      const link = document.createElement('a')
-      link.href = directUrl
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      
-      // Add authentication header by making a fetch request first
-      const token = localStorage.getItem('dwarly_token')
-      if (token) {
-        const response = await fetch(directUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        })
+      if (response && response.cvUrl) {
+        console.log('CV URL from API:', response.cvUrl)
         
-        if (response.ok) {
-          const blob = await response.blob()
-          console.log('CV blob created, size:', blob.size, 'type:', blob.type)
-          const blobUrl = URL.createObjectURL(blob)
-          window.open(blobUrl, '_blank')
-          // Clean up the blob URL after a delay
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+        // If it's a Cloudinary URL, open it directly
+        if (response.cvUrl.startsWith('http')) {
+          window.open(response.cvUrl, '_blank')
           return
-        } else {
-          const errorText = await response.text().catch(() => 'Unknown error')
-          console.error('Direct Railway request failed:', response.status, response.statusText, errorText)
-          alert(`Failed to fetch CV: ${response.status} ${response.statusText}`)
         }
       }
       
-      // Fallback: try the link directly
-      link.click()
+      // Fallback: try the API endpoint
+      const directUrl = `https://dwarly-production.up.railway.app/api/job-applications/${applicationId}/cv/view`
+      console.log('Fallback - trying direct URL:', directUrl)
+      window.open(directUrl, '_blank')
       
     } catch (err) {
       console.error('Failed to open CV:', err)
