@@ -209,7 +209,38 @@ function ApplicationsModal({ job, isOpen, onClose }) {
         
         // All CVs are now stored on Cloudinary - open directly
         if (response.cvUrl.startsWith('http')) {
-          window.open(response.cvUrl, '_blank')
+          // Mobile-friendly CV opening
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          
+          if (isMobile) {
+            // For mobile, try multiple methods
+            try {
+              // Method 1: Direct window.open
+              const newWindow = window.open(response.cvUrl, '_blank')
+              if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                // Method 2: Create a temporary link and click it
+                const link = document.createElement('a')
+                link.href = response.cvUrl
+                link.target = '_blank'
+                link.rel = 'noopener noreferrer'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+              }
+            } catch (mobileError) {
+              // Method 3: Fallback - copy URL to clipboard and show alert
+              try {
+                await navigator.clipboard.writeText(response.cvUrl)
+                alert(`CV URL copied to clipboard. Please paste it in your browser to view the CV.`)
+              } catch (clipboardError) {
+                // Method 4: Final fallback - show URL in alert
+                alert(`Please copy this URL and open it in your browser:\n${response.cvUrl}`)
+              }
+            }
+          } else {
+            // For desktop, use standard window.open
+            window.open(response.cvUrl, '_blank')
+          }
           return
         } else {
           throw new Error('Invalid CV URL - not a Cloudinary URL')
