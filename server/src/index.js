@@ -64,8 +64,7 @@ app.use(
 // Handle preflight requests
 app.options("*", cors())
 
-// --- Serve uploaded files
-app.use('/uploads', express.static('uploads'))
+// --- Static file serving removed - all files now stored on Cloudinary
 
 // --- API routes
 app.use('/api/auth', authRoutes)

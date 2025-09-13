@@ -46,24 +46,14 @@ router.get('/test-cloudinary/:id', auth(), safeHandler(async (req, res) => {
 
 // Removed unused fetchFileFromUrl function - using direct redirects now
 
-// Configure multer for CV uploads (memory storage if Cloudinary configured)
+// Configure multer for CV uploads - Cloudinary only
 const useCloudinary = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
 
-const storage = useCloudinary
-  ? multer.memoryStorage()
-  : multer.diskStorage({
-      destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../../uploads/cvs');
-        if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueName = `${uuidv4()}-${file.originalname}`;
-        cb(null, uniqueName);
-      }
-    });
+if (!useCloudinary) {
+  throw new Error('Cloudinary configuration is required. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET environment variables.');
+}
+
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
@@ -201,71 +191,14 @@ router.get('/:id/cv', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it directly
-  if (/^https?:\/\//i.test(application.cvUrl || '')) {
-    console.log('CV Download - Redirecting to Cloudinary URL:', application.cvUrl);
-    return res.redirect(302, application.cvUrl);
+  // All CVs are now stored on Cloudinary - redirect to the URL directly
+  if (!application.cvUrl || !/^https?:\/\//i.test(application.cvUrl)) {
+    console.error('CV URL is not a valid Cloudinary URL:', application.cvUrl);
+    return res.status(404).json({ error: 'CV file not found or invalid URL' });
   }
 
-  const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
-  
-  console.log('CV Download - File path:', cvPath);
-  console.log('CV Download - File exists:', fs.existsSync(cvPath));
-  
-  if (!fs.existsSync(cvPath)) {
-    console.error('CV file not found at path:', cvPath);
-    return res.status(404).json({ error: 'CV file not found' });
-  }
-  
-  // Check file stats
-  try {
-    const stats = fs.statSync(cvPath);
-    console.log('CV Download - File size:', stats.size, 'bytes');
-    console.log('CV Download - File is file:', stats.isFile());
-  } catch (err) {
-    console.error('Error getting file stats:', err);
-    return res.status(500).json({ error: 'Error accessing CV file' });
-  }
-  
-  // Get file extension and set appropriate MIME type
-  const ext = path.extname(application.cvFileName).toLowerCase();
-  const mimeTypes = {
-    '.pdf': 'application/pdf',
-    '.doc': 'application/msword',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  };
-  
-  const mimeType = mimeTypes[ext] || 'application/octet-stream';
-  
-  // Set headers for proper download
-  res.setHeader('Content-Type', mimeType);
-  res.setHeader('Cache-Control', 'no-cache');
-  
-  console.log('CV Download - Application ID:', req.params.id);
-  console.log('CV Download - Original filename:', application.cvFileName);
-  console.log('CV Download - CV URL:', application.cvUrl);
-  console.log('CV Download - Full application data:', JSON.stringify({
-    cvFileName: application.cvFileName,
-    cvUrl: application.cvUrl,
-    id: application._id
-  }, null, 2));
-  
-  // Use res.download() with proper filename - this will set the correct Content-Disposition header
-  try {
-    res.download(cvPath, application.cvFileName, (err) => {
-      if (err) {
-        console.error('Error downloading CV file:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error downloading CV file' });
-        }
-      } else {
-        console.log('CV file downloaded successfully');
-      }
-    });
-  } catch (err) {
-    console.error('Error in res.download:', err);
-    res.status(500).json({ error: 'Error downloading CV file' });
-  }
+  console.log('CV Download - Redirecting to Cloudinary URL:', application.cvUrl);
+  return res.redirect(302, application.cvUrl);
 }));
 
 // GET /api/job-applications/:id/cv/view - View CV in browser
@@ -313,64 +246,14 @@ router.get('/:id/cv/view', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this CV' });
   }
   
-  // If cvUrl is a remote URL (e.g., Cloudinary), redirect to it directly
-  if (/^https?:\/\//i.test(application.cvUrl || '')) {
-    console.log('CV View - Redirecting to Cloudinary URL:', application.cvUrl);
-    return res.redirect(302, application.cvUrl);
+  // All CVs are now stored on Cloudinary - redirect to the URL directly
+  if (!application.cvUrl || !/^https?:\/\//i.test(application.cvUrl)) {
+    console.error('CV URL is not a valid Cloudinary URL:', application.cvUrl);
+    return res.status(404).json({ error: 'CV file not found or invalid URL' });
   }
 
-  const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
-  
-  console.log('CV View - File path:', cvPath);
-  console.log('CV View - File exists:', fs.existsSync(cvPath));
-  
-  if (!fs.existsSync(cvPath)) {
-    console.error('CV file not found at path:', cvPath);
-    return res.status(404).json({ error: 'CV file not found' });
-  }
-  
-  // Get file stats
-  try {
-    const stats = fs.statSync(cvPath);
-    console.log('CV View - File size:', stats.size, 'bytes');
-  } catch (err) {
-    console.error('Error getting file stats:', err);
-    return res.status(500).json({ error: 'Error accessing CV file' });
-  }
-  
-  // Get file extension and set appropriate MIME type
-  const ext = path.extname(application.cvFileName).toLowerCase();
-  const mimeTypes = {
-    '.pdf': 'application/pdf',
-    '.doc': 'application/msword',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  };
-  
-  const mimeType = mimeTypes[ext] || 'application/octet-stream';
-  
-  console.log('CV View - MIME type:', mimeType);
-  console.log('CV View - Original filename:', application.cvFileName);
-  
-  // Set headers for viewing in browser
-  res.setHeader('Content-Type', mimeType);
-  res.setHeader('Cache-Control', 'no-cache');
-  
-  // Use res.sendFile for more reliable file serving
-  try {
-    res.sendFile(cvPath, (err) => {
-      if (err) {
-        console.error('Error sending CV file:', err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: 'Error sending CV file' });
-        }
-      } else {
-        console.log('CV file sent successfully');
-      }
-    });
-  } catch (err) {
-    console.error('Error in res.sendFile:', err);
-    res.status(500).json({ error: 'Error sending CV file' });
-  }
+  console.log('CV View - Redirecting to Cloudinary URL:', application.cvUrl);
+  return res.redirect(302, application.cvUrl);
 }));
 
 // GET /api/job-applications/:id - Get specific application
@@ -451,42 +334,23 @@ router.post('/', auth(), upload.single('cv'), safeHandler(async (req, res) => {
     fileSize: req.file.size
   });
   
-  if (useCloudinary) {
-    try {
-      // Use a simpler upload approach
-      const result = await cloudinary.uploader.upload(req.file.buffer, {
-        folder: 'dwarly/cvs',
-        resource_type: 'raw',
-        public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-      });
-      
-      if (result && result.secure_url) {
-        cvUrl = result.secure_url;
-        console.log('CV Upload - Cloudinary URL:', cvUrl);
-        console.log('CV Upload - Cloudinary URL length:', cvUrl.length);
-      } else {
-        throw new Error('No secure_url returned from Cloudinary');
-      }
-    } catch (error) {
-      console.error('CV Upload - Cloudinary upload failed:', error);
-      // Fallback to local storage
-      const localFilename = `${Date.now()}_${originalName}`;
-      const localPath = path.join(__dirname, '../../uploads/cvs', localFilename);
-      
-      // Ensure directory exists
-      const uploadDir = path.join(__dirname, '../../uploads/cvs');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      // Save file locally
-      fs.writeFileSync(localPath, req.file.buffer);
-      cvUrl = `/uploads/cvs/${localFilename}`;
-      console.log('CV Upload - Fallback to local storage:', cvUrl);
+  // Upload to Cloudinary (required)
+  try {
+    const result = await cloudinary.uploader.upload(req.file.buffer, {
+      folder: 'dwarly/cvs',
+      resource_type: 'raw',
+      public_id: `cv_${Date.now()}_${originalName.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+    });
+    
+    if (result && result.secure_url) {
+      cvUrl = result.secure_url;
+      console.log('CV Upload - Cloudinary URL:', cvUrl);
+    } else {
+      throw new Error('No secure_url returned from Cloudinary');
     }
-  } else {
-    cvUrl = `/uploads/cvs/${req.file.filename}`
-    console.log('CV Upload - Local URL:', cvUrl);
+  } catch (error) {
+    console.error('CV Upload - Cloudinary upload failed:', error);
+    throw new Error('Failed to upload CV to Cloudinary. Please try again.');
   }
   
   const application = new JobApplication({
@@ -545,14 +409,25 @@ router.put('/:id', auth(), upload.single('cv'), safeHandler(async (req, res) => 
   
   // Update CV if new one provided
   if (req.file) {
-    // Delete old CV file
-    const oldCvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
-    if (fs.existsSync(oldCvPath)) {
-      fs.unlinkSync(oldCvPath);
+    // Upload new CV to Cloudinary
+    try {
+      const result = await cloudinary.uploader.upload(req.file.buffer, {
+        folder: 'dwarly/cvs',
+        resource_type: 'raw',
+        public_id: `cv_${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      });
+      
+      if (result && result.secure_url) {
+        application.cvUrl = result.secure_url;
+        application.cvFileName = req.file.originalname;
+        console.log('CV Update - New Cloudinary URL:', result.secure_url);
+      } else {
+        throw new Error('No secure_url returned from Cloudinary');
+      }
+    } catch (error) {
+      console.error('CV Update - Cloudinary upload failed:', error);
+      return res.status(500).json({ error: 'Failed to upload new CV to Cloudinary. Please try again.' });
     }
-    
-    application.cvUrl = `/uploads/cvs/${req.file.filename}`;
-    application.cvFileName = req.file.originalname;
   }
   
   await application.save();
@@ -581,11 +456,8 @@ router.delete('/:id', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to delete this application' });
   }
   
-  // Delete CV file
-  const cvPath = path.join(__dirname, '../../uploads/cvs', path.basename(application.cvUrl));
-  if (fs.existsSync(cvPath)) {
-    fs.unlinkSync(cvPath);
-  }
+  // CV files are stored on Cloudinary - no local file deletion needed
+  // Note: Cloudinary files will remain unless manually deleted from the dashboard
   
   await JobApplication.findByIdAndDelete(req.params.id);
   

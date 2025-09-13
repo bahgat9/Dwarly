@@ -207,17 +207,16 @@ function ApplicationsModal({ job, isOpen, onClose }) {
       if (response && response.cvUrl) {
         console.log('CV URL from API:', response.cvUrl)
         
-        // If it's a Cloudinary URL, open it directly
+        // All CVs are now stored on Cloudinary - open directly
         if (response.cvUrl.startsWith('http')) {
           window.open(response.cvUrl, '_blank')
           return
+        } else {
+          throw new Error('Invalid CV URL - not a Cloudinary URL')
         }
+      } else {
+        throw new Error('No CV URL found')
       }
-      
-      // Fallback: try the API endpoint
-      const directUrl = `https://dwarly-production.up.railway.app/api/job-applications/${applicationId}/cv/view`
-      console.log('Fallback - trying direct URL:', directUrl)
-      window.open(directUrl, '_blank')
       
     } catch (err) {
       console.error('Failed to open CV:', err)
