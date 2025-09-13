@@ -201,21 +201,45 @@ function ApplicationsModal({ job, isOpen, onClose }) {
 
   const downloadCV = async (applicationId) => {
     try {
-      // Fetch the CV through the API with proper authentication
-      const response = await api(`/api/job-applications/${applicationId}/cv/view`, {
-        method: 'GET'
-      })
+      // Try direct Railway URL first to bypass Vercel rewrite issues
+      const directUrl = `https://dwarly-production.up.railway.app/api/job-applications/${applicationId}/cv/view`
+      console.log('Trying direct Railway URL:', directUrl)
       
-      // The API client now returns a blob for file responses
-      if (response instanceof Blob) {
-        const blobUrl = URL.createObjectURL(response)
-        window.open(blobUrl, '_blank')
-        // Clean up the blob URL after a delay
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
-      } else {
-        console.error('Unexpected response type:', typeof response)
-        alert('Failed to open CV - unexpected response format')
+      // Create a temporary link with authentication
+      const link = document.createElement('a')
+      link.href = directUrl
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      
+      // Add authentication header by making a fetch request first
+      const token = localStorage.getItem('dwarly_token')
+      if (token) {
+        const response = await fetch(directUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        })
+        
+        if (response.ok) {
+          const blob = await response.blob()
+          console.log('CV blob created, size:', blob.size, 'type:', blob.type)
+          const blobUrl = URL.createObjectURL(blob)
+          window.open(blobUrl, '_blank')
+          // Clean up the blob URL after a delay
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000)
+          return
+        } else {
+          const errorText = await response.text().catch(() => 'Unknown error')
+          console.error('Direct Railway request failed:', response.status, response.statusText, errorText)
+          alert(`Failed to fetch CV: ${response.status} ${response.statusText}`)
+        }
       }
+      
+      // Fallback: try the link directly
+      link.click()
       
     } catch (err) {
       console.error('Failed to open CV:', err)
