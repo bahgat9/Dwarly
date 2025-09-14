@@ -274,6 +274,15 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
   
   await application.save();
   
+  // Log the application state for debugging
+  console.log('Application after save:', {
+    id: application._id,
+    status: application.status,
+    cvDeleted: application.cvDeleted,
+    cvUrl: application.cvUrl,
+    cvFileName: application.cvFileName
+  });
+  
   res.json(application);
 }));
 

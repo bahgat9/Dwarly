@@ -177,6 +177,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
       setLoading(true)
       setError('')
       const data = await api(`/api/jobs/${job._id}/applications`)
+      console.log('Loaded applications:', data)
       setApplications(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('Failed to load applications:', err)
@@ -188,10 +189,11 @@ function ApplicationsModal({ job, isOpen, onClose }) {
 
   const handleStatusUpdate = async (applicationId, newStatus, deleteCv = false) => {
     try {
-      await api(`/api/jobs/${job._id}/applications/${applicationId}/status`, {
+      const response = await api(`/api/jobs/${job._id}/applications/${applicationId}/status`, {
         method: 'PUT',
         body: JSON.stringify({ status: newStatus, deleteCv })
       })
+      console.log('Status update response:', response)
       loadApplications() // Refresh the list
     } catch (err) {
       console.error('Failed to update application status:', err)
@@ -430,7 +432,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
                   )}
 
                   {/* CV Deletion for Rejected Applications */}
-                  {application.status === 'rejected' && !application.cvDeleted && (
+                  {application.status === 'rejected' && !application.cvDeleted && application.cvUrl && (
                     <div className="mt-6 pt-4 border-t border-white/10">
                       <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
                         <div className="flex items-center justify-between">
@@ -451,7 +453,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
                   )}
 
                   {/* CV Deleted Status */}
-                  {application.cvDeleted && (
+                  {(application.cvDeleted || (application.status === 'rejected' && !application.cvUrl)) && (
                     <div className="mt-6 pt-4 border-t border-white/10">
                       <div className="bg-gray-500/5 border border-gray-500/20 rounded-lg p-4">
                         <div className="flex items-center gap-2 text-gray-400 text-sm">
