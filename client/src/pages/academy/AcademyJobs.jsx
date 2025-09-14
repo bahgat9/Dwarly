@@ -209,68 +209,35 @@ function ApplicationsModal({ job, isOpen, onClose }) {
         
         // All CVs are now stored on Cloudinary - open directly
         if (response.cvUrl.startsWith('http')) {
-          // Mobile-friendly CV opening with multiple fallback methods
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
           
           console.log('Opening CV - Mobile detected:', isMobile)
           console.log('CV URL:', response.cvUrl)
           
           if (isMobile) {
-            // Method 1: Try window.open first
-            try {
-              const newWindow = window.open(response.cvUrl, '_blank', 'noopener,noreferrer')
-              console.log('Window.open result:', newWindow)
-              
-              // Check if window was blocked
-              setTimeout(() => {
-                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                  console.log('Window.open failed, trying alternative method')
-                  // Method 2: Create and click a link
-                  const link = document.createElement('a')
-                  link.href = response.cvUrl
-                  link.target = '_blank'
-                  link.rel = 'noopener noreferrer'
-                  link.style.display = 'none'
-                  document.body.appendChild(link)
-                  
-                  // Trigger click event
-                  const clickEvent = new MouseEvent('click', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true
-                  })
-                  link.dispatchEvent(clickEvent)
-                  
-                  // Clean up
-                  setTimeout(() => {
-                    document.body.removeChild(link)
-                  }, 100)
-                  
-                  // If still no success, show user options
-                  setTimeout(() => {
-                    const userChoice = confirm(
-                      `CV couldn't open automatically. Would you like to:\n\n` +
-                      `• Click OK to copy the link to clipboard\n` +
-                      `• Click Cancel to see the URL to copy manually`
-                    )
-                    
-                    if (userChoice) {
-                      // Copy to clipboard
-                      navigator.clipboard.writeText(response.cvUrl).then(() => {
-                        alert('CV URL copied to clipboard! Paste it in your browser to view.')
-                      }).catch(() => {
-                        alert(`Please copy this URL:\n${response.cvUrl}`)
-                      })
-                    } else {
-                      alert(`Please copy this URL and open it in your browser:\n\n${response.cvUrl}`)
-                    }
-                  }, 2000)
-                }
-              }, 1000)
-              
-            } catch (error) {
-              console.error('Mobile CV opening error:', error)
-              // Direct fallback to user choice
+            // Mobile: Use direct link method (most reliable)
+            const link = document.createElement('a')
+            link.href = response.cvUrl
+            link.target = '_blank'
+            link.rel = 'noopener noreferrer'
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            
+            // Trigger click event
+            const clickEvent = new MouseEvent('click', {
+              view: window,
+              bubbles: true,
+              cancelable: true
+            })
+            link.dispatchEvent(clickEvent)
+            
+            // Clean up
+            setTimeout(() => {
+              document.body.removeChild(link)
+            }, 100)
+            
+            // Fallback if direct link doesn't work
+            setTimeout(() => {
               const userChoice = confirm(
                 `CV couldn't open automatically. Would you like to:\n\n` +
                 `• Click OK to copy the link to clipboard\n` +
@@ -286,9 +253,9 @@ function ApplicationsModal({ job, isOpen, onClose }) {
               } else {
                 alert(`Please copy this URL and open it in your browser:\n\n${response.cvUrl}`)
               }
-            }
+            }, 2000)
           } else {
-            // For desktop, use standard window.open
+            // Desktop: Use standard window.open
             window.open(response.cvUrl, '_blank')
           }
           return
@@ -412,37 +379,17 @@ function ApplicationsModal({ job, isOpen, onClose }) {
                     {application.cvUrl && (
                       <div>
                         <h4 className="text-sm font-semibold text-white mb-2">CV</h4>
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => downloadCV(application._id)}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-xl hover:bg-blue-500/30 transition-all"
-                            >
-                              <Eye className="w-4 h-4" />
-                              Open CV
-                            </button>
-                            <span className="text-white/60 text-sm">
-                              {application.cvFileName || 'CV File'}
-                            </span>
-                          </div>
-                          
-                          {/* Mobile-friendly direct link */}
-                          {application.cvUrl.startsWith('http') && (
-                            <div className="mt-2">
-                              <a
-                                href={application.cvUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-3 py-2 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-all text-sm"
-                              >
-                                <Eye className="w-4 h-4" />
-                                Direct Link (Mobile)
-                              </a>
-                              <p className="text-white/50 text-xs mt-1">
-                                If the button above doesn't work, try this direct link
-                              </p>
-                            </div>
-                          )}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => downloadCV(application._id)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-xl hover:bg-blue-500/30 transition-all"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Open CV
+                          </button>
+                          <span className="text-white/60 text-sm">
+                            {application.cvFileName || 'CV File'}
+                          </span>
                         </div>
                       </div>
                     )}
