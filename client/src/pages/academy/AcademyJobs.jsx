@@ -215,29 +215,60 @@ function ApplicationsModal({ job, isOpen, onClose }) {
           console.log('CV URL:', response.cvUrl)
           
           if (isMobile) {
-            // Mobile: Use direct link method (most reliable)
-            const link = document.createElement('a')
-            link.href = response.cvUrl
-            link.target = '_blank'
-            link.rel = 'noopener noreferrer'
-            link.style.display = 'none'
-            document.body.appendChild(link)
-            
-            // Trigger click event
-            const clickEvent = new MouseEvent('click', {
-              view: window,
-              bubbles: true,
-              cancelable: true
-            })
-            link.dispatchEvent(clickEvent)
-            
-            // Clean up
-            setTimeout(() => {
-              document.body.removeChild(link)
-            }, 100)
-            
-            // Fallback if direct link doesn't work
-            setTimeout(() => {
+            // Mobile: Try window.open first, then fallback to direct link
+            try {
+              const newWindow = window.open(response.cvUrl, '_blank', 'noopener,noreferrer')
+              
+              // Check if window was blocked or failed
+              setTimeout(() => {
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                  console.log('Window.open failed on mobile, trying direct link method')
+                  
+                  // Fallback: Use direct link method
+                  const link = document.createElement('a')
+                  link.href = response.cvUrl
+                  link.target = '_blank'
+                  link.rel = 'noopener noreferrer'
+                  link.style.display = 'none'
+                  document.body.appendChild(link)
+                  
+                  // Trigger click event
+                  const clickEvent = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true
+                  })
+                  link.dispatchEvent(clickEvent)
+                  
+                  // Clean up
+                  setTimeout(() => {
+                    document.body.removeChild(link)
+                  }, 100)
+                  
+                  // Final fallback if both methods fail
+                  setTimeout(() => {
+                    const userChoice = confirm(
+                      `CV couldn't open automatically. Would you like to:\n\n` +
+                      `• Click OK to copy the link to clipboard\n` +
+                      `• Click Cancel to see the URL to copy manually`
+                    )
+                    
+                    if (userChoice) {
+                      navigator.clipboard.writeText(response.cvUrl).then(() => {
+                        alert('CV URL copied to clipboard! Paste it in your browser to view.')
+                      }).catch(() => {
+                        alert(`Please copy this URL:\n${response.cvUrl}`)
+                      })
+                    } else {
+                      alert(`Please copy this URL and open it in your browser:\n\n${response.cvUrl}`)
+                    }
+                  }, 2000)
+                }
+              }, 1000)
+              
+            } catch (error) {
+              console.error('Mobile CV opening error:', error)
+              // Direct fallback to user choice
               const userChoice = confirm(
                 `CV couldn't open automatically. Would you like to:\n\n` +
                 `• Click OK to copy the link to clipboard\n` +
@@ -253,7 +284,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
               } else {
                 alert(`Please copy this URL and open it in your browser:\n\n${response.cvUrl}`)
               }
-            }, 2000)
+            }
           } else {
             // Desktop: Use standard window.open
             window.open(response.cvUrl, '_blank')
