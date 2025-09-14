@@ -259,41 +259,11 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
         // Continue with status update even if CV deletion fails
       }
     } else {
-      // Automatic deletion - schedule for 15 minutes
+      // Automatic deletion - mark for deletion, will be handled by cleanup job
       const deletionTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
       application.cvDeletionReason = 'academy_rejected_auto';
       application.cvDeletedAt = deletionTime;
-      
-      // Schedule automatic deletion
-      setTimeout(async () => {
-        try {
-          const updatedApplication = await JobApplication.findById(req.params.applicationId);
-          if (updatedApplication && !updatedApplication.cvDeleted && updatedApplication.status === 'rejected') {
-            // Delete CV from Cloudinary
-            const publicId = extractPublicIdFromUrl(updatedApplication.cvUrl);
-            if (publicId) {
-              await deleteCloudinaryFile(publicId);
-              console.log('CV automatically deleted from Cloudinary:', publicId);
-            }
-            
-            // Mark CV as deleted and remove fields from database
-            await JobApplication.findByIdAndUpdate(
-              req.params.applicationId,
-              { 
-                $unset: { cvUrl: "", cvFileName: "" },
-                $set: {
-                  cvDeleted: true,
-                  cvDeletedBy: req.user.id
-                }
-              }
-            );
-            
-            console.log('CV automatically deleted for application:', req.params.applicationId);
-          }
-        } catch (error) {
-          console.error('Error in automatic CV deletion:', error);
-        }
-      }, 15 * 60 * 1000); // 15 minutes
+      console.log('CV marked for automatic deletion at:', deletionTime);
     }
   }
   
