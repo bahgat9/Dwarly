@@ -214,85 +214,31 @@ function ApplicationsModal({ job, isOpen, onClose }) {
           console.log('Opening CV - Mobile detected:', isMobile)
           console.log('CV URL:', response.cvUrl)
           
-          // Detect Safari specifically
-          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
-          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-          const isSafariMobile = isSafari && isIOS
-          
           if (isMobile) {
-            if (isSafariMobile) {
-              // Safari Mobile: Use direct link method (most reliable for Safari)
-              console.log('Safari Mobile detected - using direct link method')
-              
-              const link = document.createElement('a')
-              link.href = response.cvUrl
-              link.target = '_blank'
-              link.rel = 'noopener noreferrer'
-              link.style.display = 'none'
-              document.body.appendChild(link)
-              
-              // Trigger click event immediately
-              const clickEvent = new MouseEvent('click', {
-                view: window,
-                bubbles: true,
-                cancelable: true
-              })
-              link.dispatchEvent(clickEvent)
-              
-              // Clean up
-              setTimeout(() => {
+            // Mobile: Use <a target="_blank"> method (most reliable for mobile)
+            console.log('Mobile detected - using anchor tag method')
+            
+            const link = document.createElement('a')
+            link.href = response.cvUrl
+            link.target = '_blank'
+            link.rel = 'noopener noreferrer'
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            
+            // Trigger click event
+            link.click()
+            
+            // Clean up
+            setTimeout(() => {
+              if (document.body.contains(link)) {
                 document.body.removeChild(link)
-              }, 100)
-              
-            } else {
-              // Other Mobile Browsers: Try window.open first
-              try {
-                const newWindow = window.open(response.cvUrl, '_blank', 'noopener,noreferrer')
-                
-                // Check if window was blocked or failed
-                setTimeout(() => {
-                  if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                    console.log('Window.open failed on mobile, trying direct link method')
-                    
-                    // Fallback: Use direct link method
-                    const link = document.createElement('a')
-                    link.href = response.cvUrl
-                    link.target = '_blank'
-                    link.rel = 'noopener noreferrer'
-                    link.style.display = 'none'
-                    document.body.appendChild(link)
-                    
-                    // Trigger click event
-                    const clickEvent = new MouseEvent('click', {
-                      view: window,
-                      bubbles: true,
-                      cancelable: true
-                    })
-                    link.dispatchEvent(clickEvent)
-                    
-                    // Clean up
-                    setTimeout(() => {
-                      document.body.removeChild(link)
-                    }, 100)
-                  }
-                }, 1000)
-                
-              } catch (error) {
-                console.error('Mobile CV opening error:', error)
-                // Use direct link method as fallback
-                const link = document.createElement('a')
-                link.href = response.cvUrl
-                link.target = '_blank'
-                link.rel = 'noopener noreferrer'
-                link.style.display = 'none'
-                document.body.appendChild(link)
-                link.click()
-                setTimeout(() => document.body.removeChild(link), 100)
               }
-            }
+            }, 100)
+            
           } else {
-            // Desktop: Use standard window.open
-            window.open(response.cvUrl, '_blank')
+            // Desktop: Use window.open
+            console.log('Desktop detected - using window.open')
+            window.open(response.cvUrl, '_blank', 'noopener,noreferrer')
           }
           return
         } else {
