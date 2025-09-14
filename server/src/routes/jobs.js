@@ -227,13 +227,13 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
           console.log('CV deleted from Cloudinary by academy:', publicId);
         }
         
-        // Mark CV as deleted
+        // Mark CV as deleted and remove fields from database
         application.cvDeleted = true;
         application.cvDeletedAt = new Date();
         application.cvDeletedBy = req.user.id;
         application.cvDeletionReason = 'academy_rejected_manual';
-        application.cvUrl = ''; // Clear the URL
-        application.cvFileName = ''; // Clear the filename
+        application.unset('cvUrl'); // Remove from database
+        application.unset('cvFileName'); // Remove from database
       } catch (error) {
         console.error('Error deleting CV during rejection:', error);
         // Continue with status update even if CV deletion fails
@@ -256,11 +256,11 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
               console.log('CV automatically deleted from Cloudinary:', publicId);
             }
             
-            // Mark CV as deleted
+            // Mark CV as deleted and remove fields from database
             updatedApplication.cvDeleted = true;
             updatedApplication.cvDeletedBy = req.user.id;
-            updatedApplication.cvUrl = '';
-            updatedApplication.cvFileName = '';
+            updatedApplication.unset('cvUrl'); // Remove from database
+            updatedApplication.unset('cvFileName'); // Remove from database
             
             await updatedApplication.save();
             console.log('CV automatically deleted for application:', req.params.applicationId);

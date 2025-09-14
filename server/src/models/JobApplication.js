@@ -27,11 +27,11 @@ const jobApplicationSchema = new mongoose.Schema({
   },
   cvUrl: {
     type: String,
-    required: true
+    required: false
   },
   cvFileName: {
     type: String,
-    required: true
+    required: false
   },
   status: {
     type: String,

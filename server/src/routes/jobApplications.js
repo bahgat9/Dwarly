@@ -840,13 +840,13 @@ router.delete('/:id/cv', auth(), safeHandler(async (req, res) => {
       console.log('CV deleted from Cloudinary:', publicId);
     }
     
-    // Update application to mark CV as deleted
+    // Update application to mark CV as deleted and remove fields from database
     application.cvDeleted = true;
     application.cvDeletedAt = new Date();
     application.cvDeletedBy = req.user.id;
     application.cvDeletionReason = 'user_removed';
-    application.cvUrl = ''; // Clear the URL
-    application.cvFileName = ''; // Clear the filename
+    application.unset('cvUrl'); // Remove from database
+    application.unset('cvFileName'); // Remove from database
     
     await application.save();
     
