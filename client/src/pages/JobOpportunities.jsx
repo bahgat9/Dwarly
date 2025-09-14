@@ -534,22 +534,6 @@ export default function JobOpportunities() {
     loadData() // Refresh data to show updated application status
   }
 
-  const handleDeleteCv = async (applicationId) => {
-    if (!confirm(t("jobs.confirmRemoveCV"))) {
-      return
-    }
-
-    try {
-      await api(`/api/job-applications/${applicationId}/cv`, {
-        method: 'DELETE'
-      })
-      alert('CV removed successfully')
-      loadData() // Refresh applications
-    } catch (err) {
-      console.error('Failed to delete CV:', err)
-      alert('Failed to remove CV')
-    }
-  }
 
   if (loading) {
     return (
@@ -668,72 +652,6 @@ export default function JobOpportunities() {
           </div>
         </motion.div>
 
-        {/* User Applications Section */}
-        {userApplications.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h2 className="text-2xl font-bold text-white mb-6">{t("jobs.yourApplications")}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {userApplications.map((application) => (
-                <div
-                  key={application._id}
-                  className="bg-white/5 rounded-2xl p-6 border border-white/10"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">
-                        {application.job?.title}
-                      </h3>
-                      <p className="text-white/70 text-sm">
-                        {application.job?.academy?.name}
-                      </p>
-                      <p className="text-white/60 text-xs mt-1">
-                        Applied {new Date(application.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <StatusBadge status={application.status} />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-semibold text-white mb-1">Cover Letter</h4>
-                      <p className="text-white/80 text-sm line-clamp-3">
-                        {application.coverLetter}
-                      </p>
-                    </div>
-
-                    {application.cvUrl && !application.cvDeleted && (
-                      <div className="flex items-center justify-between p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                        <div className="flex items-center gap-2 text-blue-300 text-sm">
-                          <FileText className="w-4 h-4" />
-                          <span>CV: {application.cvFileName}</span>
-                        </div>
-                        {application.status === 'pending' && (
-                          <button
-                            onClick={() => handleDeleteCv(application._id)}
-                            className="text-red-400 hover:text-red-300 text-sm font-medium"
-                          >
-{t("jobs.removeCV")}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {application.cvDeleted && (
-                      <div className="flex items-center gap-2 text-red-400 text-sm p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                        <XCircle className="w-4 h-4" />
-                        <span>{t("jobs.cvRemoved")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
         {/* Jobs Grid */}
         <motion.div

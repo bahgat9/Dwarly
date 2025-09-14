@@ -199,18 +199,6 @@ function ApplicationsModal({ job, isOpen, onClose }) {
     }
   }
 
-  const handleScheduleCvDeletion = async (applicationId) => {
-    try {
-      await api(`/api/jobs/${job._id}/applications/${applicationId}/schedule-cv-deletion`, {
-        method: 'POST'
-      })
-      alert('CV deletion scheduled for 15 minutes from now')
-      loadApplications() // Refresh the list
-    } catch (err) {
-      console.error('Failed to schedule CV deletion:', err)
-      alert('Failed to schedule CV deletion')
-    }
-  }
 
   const downloadCV = async (applicationId) => {
     try {
@@ -423,42 +411,52 @@ function ApplicationsModal({ job, isOpen, onClose }) {
 
                   {/* Actions */}
                   {application.status === 'pending' && (
+                    <div className="flex items-center gap-3 mt-6 pt-4 border-t border-white/10">
+                      <button
+                        onClick={() => handleStatusUpdate(application._id, 'approved')}
+                        className="flex-1 py-2 px-4 bg-green-500/20 text-green-300 font-semibold rounded-xl hover:bg-green-500/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleStatusUpdate(application._id, 'rejected')}
+                        className="flex-1 py-2 px-4 bg-red-500/20 text-red-300 font-semibold rounded-xl hover:bg-red-500/30 transition-all flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Reject
+                      </button>
+                    </div>
+                  )}
+
+                  {/* CV Deletion for Rejected Applications */}
+                  {application.status === 'rejected' && !application.cvDeleted && (
                     <div className="mt-6 pt-4 border-t border-white/10">
-                      <div className="flex items-center gap-3 mb-3">
-                        <button
-                          onClick={() => handleStatusUpdate(application._id, 'approved')}
-                          className="flex-1 py-2 px-4 bg-green-500/20 text-green-300 font-semibold rounded-xl hover:bg-green-500/30 transition-all flex items-center justify-center gap-2"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(application._id, 'rejected')}
-                          className="flex-1 py-2 px-4 bg-red-500/20 text-red-300 font-semibold rounded-xl hover:bg-red-500/30 transition-all flex items-center justify-center gap-2"
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Reject
-                        </button>
-                      </div>
-                      
-                      {/* CV Deletion Options for Rejection */}
-                      <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
-                        <p className="text-red-300 text-sm font-medium mb-2">CV Deletion Options:</p>
-                        <div className="flex items-center gap-2">
+                      <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-red-300 text-sm font-medium">CV will be automatically deleted in 15 minutes</p>
+                            <p className="text-red-400/70 text-xs mt-1">Or delete it now if you prefer</p>
+                          </div>
                           <button
                             onClick={() => handleStatusUpdate(application._id, 'rejected', true)}
-                            className="flex-1 py-2 px-3 bg-red-500/20 text-red-300 text-sm font-medium rounded-lg hover:bg-red-500/30 transition-all flex items-center justify-center gap-2"
+                            className="py-2 px-4 bg-red-500/20 text-red-300 text-sm font-medium rounded-lg hover:bg-red-500/30 transition-all flex items-center gap-2"
                           >
                             <XCircle className="w-4 h-4" />
-                            Reject & Delete CV Now
+                            Delete CV Now
                           </button>
-                          <button
-                            onClick={() => handleScheduleCvDeletion(application._id)}
-                            className="flex-1 py-2 px-3 bg-orange-500/20 text-orange-300 text-sm font-medium rounded-lg hover:bg-orange-500/30 transition-all flex items-center justify-center gap-2"
-                          >
-                            <Clock className="w-4 h-4" />
-                            Reject & Delete CV in 15min
-                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CV Deleted Status */}
+                  {application.cvDeleted && (
+                    <div className="mt-6 pt-4 border-t border-white/10">
+                      <div className="bg-gray-500/5 border border-gray-500/20 rounded-lg p-4">
+                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                          <XCircle className="w-4 h-4" />
+                          <span>CV has been deleted</span>
                         </div>
                       </div>
                     </div>
