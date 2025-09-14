@@ -215,25 +215,56 @@ function ApplicationsModal({ job, isOpen, onClose }) {
           console.log('CV URL:', response.cvUrl)
           
           if (isMobile) {
-            // Mobile: Use <a target="_blank"> method (most reliable for mobile)
-            console.log('Mobile detected - using anchor tag method')
+            // MOBILE: Try multiple methods aggressively
+            console.log('Mobile detected - trying multiple methods')
             
-            const link = document.createElement('a')
-            link.href = response.cvUrl
-            link.target = '_blank'
-            link.rel = 'noopener noreferrer'
-            link.style.display = 'none'
-            document.body.appendChild(link)
+            // Method 1: Direct window.location (most aggressive)
+            try {
+              window.location.href = response.cvUrl
+              return
+            } catch (e) {
+              console.log('Method 1 failed:', e)
+            }
             
-            // Trigger click event
-            link.click()
+            // Method 2: Create visible link and click it
+            try {
+              const link = document.createElement('a')
+              link.href = response.cvUrl
+              link.target = '_blank'
+              link.rel = 'noopener noreferrer'
+              link.style.position = 'fixed'
+              link.style.top = '0'
+              link.style.left = '0'
+              link.style.width = '100%'
+              link.style.height = '100%'
+              link.style.zIndex = '9999'
+              link.style.background = 'transparent'
+              document.body.appendChild(link)
+              link.click()
+              setTimeout(() => {
+                if (document.body.contains(link)) {
+                  document.body.removeChild(link)
+                }
+              }, 1000)
+              return
+            } catch (e) {
+              console.log('Method 2 failed:', e)
+            }
             
-            // Clean up
-            setTimeout(() => {
-              if (document.body.contains(link)) {
-                document.body.removeChild(link)
+            // Method 3: window.open with fallback
+            try {
+              const newWindow = window.open(response.cvUrl, '_blank')
+              if (!newWindow || newWindow.closed) {
+                // Fallback to location
+                window.location.href = response.cvUrl
               }
-            }, 100)
+              return
+            } catch (e) {
+              console.log('Method 3 failed:', e)
+            }
+            
+            // Method 4: Last resort - show URL to user
+            alert(`Please copy this link and open it in your browser:\n${response.cvUrl}`)
             
           } else {
             // Desktop: Use window.open
