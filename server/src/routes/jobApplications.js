@@ -13,7 +13,7 @@ import Job from '../models/Job.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { safeHandler } from '../utils/safeHandler.js';
-import cloudinary from '../utils/cloudinary.js';
+import cloudinary, { deleteCloudinaryFile, extractPublicIdFromUrl } from '../utils/cloudinary.js';
 
 const router = express.Router();
 
@@ -809,6 +809,54 @@ router.put('/:id', auth(), upload.single('cv'), safeHandler(async (req, res) => 
   res.json(application);
 }));
 
+// DELETE /api/job-applications/:id/cv - Delete CV from application (applicant only)
+router.delete('/:id/cv', auth(), safeHandler(async (req, res) => {
+  const application = await JobApplication.findById(req.params.id);
+  
+  if (!application) {
+    return res.status(404).json({ error: 'Application not found' });
+  }
+  
+  // Check if user owns this application
+  if (application.applicant.toString() !== req.user.id) {
+    return res.status(403).json({ error: 'Not authorized to delete CV from this application' });
+  }
+  
+  // Check if CV is already deleted
+  if (application.cvDeleted) {
+    return res.status(400).json({ error: 'CV has already been deleted' });
+  }
+  
+  // Check if application is already reviewed (can't delete CV after review)
+  if (application.status !== 'pending') {
+    return res.status(400).json({ error: 'Cannot delete CV from reviewed applications' });
+  }
+  
+  try {
+    // Delete CV from Cloudinary
+    const publicId = extractPublicIdFromUrl(application.cvUrl);
+    if (publicId) {
+      await deleteCloudinaryFile(publicId);
+      console.log('CV deleted from Cloudinary:', publicId);
+    }
+    
+    // Update application to mark CV as deleted
+    application.cvDeleted = true;
+    application.cvDeletedAt = new Date();
+    application.cvDeletedBy = req.user.id;
+    application.cvDeletionReason = 'user_removed';
+    application.cvUrl = ''; // Clear the URL
+    application.cvFileName = ''; // Clear the filename
+    
+    await application.save();
+    
+    res.json({ message: 'CV deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting CV:', error);
+    res.status(500).json({ error: 'Failed to delete CV' });
+  }
+}));
+
 // DELETE /api/job-applications/:id - Delete application (applicant only)
 router.delete('/:id', auth(), safeHandler(async (req, res) => {
   const application = await JobApplication.findById(req.params.id);
@@ -822,8 +870,19 @@ router.delete('/:id', auth(), safeHandler(async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to delete this application' });
   }
   
-  // CV files are stored on Cloudinary - no local file deletion needed
-  // Note: Cloudinary files will remain unless manually deleted from the dashboard
+  // Delete CV from Cloudinary if not already deleted
+  if (!application.cvDeleted && application.cvUrl) {
+    try {
+      const publicId = extractPublicIdFromUrl(application.cvUrl);
+      if (publicId) {
+        await deleteCloudinaryFile(publicId);
+        console.log('CV deleted from Cloudinary during application deletion:', publicId);
+      }
+    } catch (error) {
+      console.error('Error deleting CV during application deletion:', error);
+      // Continue with application deletion even if CV deletion fails
+    }
+  }
   
   await JobApplication.findByIdAndDelete(req.params.id);
   

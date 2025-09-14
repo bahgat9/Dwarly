@@ -48,6 +48,22 @@ const jobApplicationSchema = new mongoose.Schema({
   reviewNotes: {
     type: String,
     trim: true
+  },
+  cvDeleted: {
+    type: Boolean,
+    default: false
+  },
+  cvDeletedAt: {
+    type: Date
+  },
+  cvDeletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  cvDeletionReason: {
+    type: String,
+    enum: ['user_removed', 'academy_rejected_manual', 'academy_rejected_auto'],
+    trim: true
   }
 }, {
   timestamps: true
