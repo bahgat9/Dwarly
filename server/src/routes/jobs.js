@@ -232,8 +232,28 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
         application.cvDeletedAt = new Date();
         application.cvDeletedBy = req.user.id;
         application.cvDeletionReason = 'academy_rejected_manual';
-        application.unset('cvUrl'); // Remove from database
-        application.unset('cvFileName'); // Remove from database
+        
+        // Use $unset to actually remove fields from database
+        await JobApplication.findByIdAndUpdate(
+          req.params.applicationId,
+          { 
+            $unset: { cvUrl: "", cvFileName: "" },
+            $set: {
+              cvDeleted: true,
+              cvDeletedAt: new Date(),
+              cvDeletedBy: req.user.id,
+              cvDeletionReason: 'academy_rejected_manual'
+            }
+          }
+        );
+        
+        // Update local application object to reflect changes
+        application.cvDeleted = true;
+        application.cvDeletedAt = new Date();
+        application.cvDeletedBy = req.user.id;
+        application.cvDeletionReason = 'academy_rejected_manual';
+        delete application.cvUrl;
+        delete application.cvFileName;
       } catch (error) {
         console.error('Error deleting CV during rejection:', error);
         // Continue with status update even if CV deletion fails
@@ -257,12 +277,17 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
             }
             
             // Mark CV as deleted and remove fields from database
-            updatedApplication.cvDeleted = true;
-            updatedApplication.cvDeletedBy = req.user.id;
-            updatedApplication.unset('cvUrl'); // Remove from database
-            updatedApplication.unset('cvFileName'); // Remove from database
+            await JobApplication.findByIdAndUpdate(
+              req.params.applicationId,
+              { 
+                $unset: { cvUrl: "", cvFileName: "" },
+                $set: {
+                  cvDeleted: true,
+                  cvDeletedBy: req.user.id
+                }
+              }
+            );
             
-            await updatedApplication.save();
             console.log('CV automatically deleted for application:', req.params.applicationId);
           }
         } catch (error) {

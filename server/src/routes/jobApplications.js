@@ -841,14 +841,18 @@ router.delete('/:id/cv', auth(), safeHandler(async (req, res) => {
     }
     
     // Update application to mark CV as deleted and remove fields from database
-    application.cvDeleted = true;
-    application.cvDeletedAt = new Date();
-    application.cvDeletedBy = req.user.id;
-    application.cvDeletionReason = 'user_removed';
-    application.unset('cvUrl'); // Remove from database
-    application.unset('cvFileName'); // Remove from database
-    
-    await application.save();
+    await JobApplication.findByIdAndUpdate(
+      req.params.id,
+      { 
+        $unset: { cvUrl: "", cvFileName: "" },
+        $set: {
+          cvDeleted: true,
+          cvDeletedAt: new Date(),
+          cvDeletedBy: req.user.id,
+          cvDeletionReason: 'user_removed'
+        }
+      }
+    );
     
     res.json({ message: 'CV deleted successfully' });
   } catch (error) {
