@@ -215,57 +215,7 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
   application.reviewedAt = new Date();
   if (reviewNotes) application.reviewNotes = reviewNotes;
   
-  // Handle CV deletion when rejecting
-  if (status === 'rejected' && !application.cvDeleted) {
-    if (deleteCv) {
-      // Manual deletion - delete immediately
-      try {
-        // Delete CV from Cloudinary
-        const publicId = extractPublicIdFromUrl(application.cvUrl);
-        if (publicId) {
-          await deleteCloudinaryFile(publicId);
-          console.log('CV deleted from Cloudinary by academy:', publicId);
-        }
-        
-        // Mark CV as deleted and remove fields from database
-        application.cvDeleted = true;
-        application.cvDeletedAt = new Date();
-        application.cvDeletedBy = req.user.id;
-        application.cvDeletionReason = 'academy_rejected_manual';
-        
-        // Use $unset to actually remove fields from database
-        await JobApplication.findByIdAndUpdate(
-          req.params.applicationId,
-          { 
-            $unset: { cvUrl: "", cvFileName: "" },
-            $set: {
-              cvDeleted: true,
-              cvDeletedAt: new Date(),
-              cvDeletedBy: req.user.id,
-              cvDeletionReason: 'academy_rejected_manual'
-            }
-          }
-        );
-        
-        // Update local application object to reflect changes
-        application.cvDeleted = true;
-        application.cvDeletedAt = new Date();
-        application.cvDeletedBy = req.user.id;
-        application.cvDeletionReason = 'academy_rejected_manual';
-        delete application.cvUrl;
-        delete application.cvFileName;
-      } catch (error) {
-        console.error('Error deleting CV during rejection:', error);
-        // Continue with status update even if CV deletion fails
-      }
-    } else {
-      // Automatic deletion - mark for deletion, will be handled by cleanup job
-      const deletionTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-      application.cvDeletionReason = 'academy_rejected_auto';
-      application.cvDeletedAt = deletionTime;
-      console.log('CV marked for automatic deletion at:', deletionTime);
-    }
-  }
+  // No CV deletion logic here - use the separate DELETE endpoint for complete deletion
   
   await application.save();
   
@@ -281,5 +231,43 @@ router.put('/:id/applications/:applicationId/status', auth(), requireRole('acade
   res.json(application);
 }));
 
+
+// DELETE /api/jobs/:id/applications/:applicationId - Delete entire application (academy only)
+router.delete('/:id/applications/:applicationId', auth(), requireRole('academy'), safeHandler(async (req, res) => {
+  const job = await Job.findById(req.params.id);
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found' });
+  }
+  
+  // Check if user owns this job
+  if (job.academy.toString() !== req.user.academyId) {
+    return res.status(403).json({ error: 'Not authorized to delete applications for this job' });
+  }
+  
+  const application = await JobApplication.findById(req.params.applicationId);
+  if (!application) {
+    return res.status(404).json({ error: 'Application not found' });
+  }
+  
+  try {
+    // Delete CV from Cloudinary if it exists
+    if (application.cvUrl) {
+      const publicId = extractPublicIdFromUrl(application.cvUrl);
+      if (publicId) {
+        await deleteCloudinaryFile(publicId);
+        console.log('CV deleted from Cloudinary during application deletion:', publicId);
+      }
+    }
+    
+    // Delete the entire application from database
+    await JobApplication.findByIdAndDelete(req.params.applicationId);
+    
+    console.log('Application completely deleted:', req.params.applicationId);
+    res.json({ message: 'Application deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    res.status(500).json({ error: 'Failed to delete application' });
+  }
+}));
 
 export default router;

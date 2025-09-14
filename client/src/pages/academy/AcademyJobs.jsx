@@ -201,6 +201,23 @@ function ApplicationsModal({ job, isOpen, onClose }) {
     }
   }
 
+  const handleDeleteApplication = async (applicationId) => {
+    if (!confirm('Are you sure you want to completely delete this application? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      await api(`/api/jobs/${job._id}/applications/${applicationId}`, {
+        method: 'DELETE'
+      })
+      console.log('Application deleted successfully')
+      loadApplications() // Refresh the list
+    } catch (err) {
+      console.error('Failed to delete application:', err)
+      alert('Failed to delete application')
+    }
+  }
+
 
   const downloadCV = async (applicationId) => {
     try {
@@ -431,38 +448,18 @@ function ApplicationsModal({ job, isOpen, onClose }) {
                     </div>
                   )}
 
-                  {/* CV Deletion for Rejected Applications */}
-                  {application.status === 'rejected' && !application.cvDeleted && application.cvUrl && (
-                    <div className="mt-6 pt-4 border-t border-white/10">
-                      <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-red-300 text-sm font-medium">CV will be automatically deleted in 15 minutes</p>
-                            <p className="text-red-400/70 text-xs mt-1">Or delete it now if you prefer</p>
-                          </div>
-                          <button
-                            onClick={() => handleStatusUpdate(application._id, 'rejected', true)}
-                            className="py-2 px-4 bg-red-500/20 text-red-300 text-sm font-medium rounded-lg hover:bg-red-500/30 transition-all flex items-center gap-2"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Delete CV Now
-                          </button>
-                        </div>
-                      </div>
+                  {/* Delete Application Button - Always Available */}
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleDeleteApplication(application._id)}
+                        className="py-2 px-4 bg-red-600/20 text-red-200 text-sm font-medium rounded-lg hover:bg-red-600/30 transition-all flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete Application
+                      </button>
                     </div>
-                  )}
-
-                  {/* CV Deleted Status */}
-                  {(application.cvDeleted || (application.status === 'rejected' && !application.cvUrl)) && (
-                    <div className="mt-6 pt-4 border-t border-white/10">
-                      <div className="bg-gray-500/5 border border-gray-500/20 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-gray-400 text-sm">
-                          <XCircle className="w-4 h-4" />
-                          <span>CV has been deleted</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>

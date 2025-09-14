@@ -122,53 +122,6 @@ async function start() {
     })
     console.log('✅ Scheduled cleanup job for finished matches')
 
-    // --- CV Cleanup job
-    schedule.scheduleJob('*/1 * * * *', async () => {
-      try {
-        const now = new Date()
-        const applicationsToDelete = await JobApplication.find({
-          status: 'rejected',
-          cvDeleted: false,
-          cvDeletionReason: 'academy_rejected_auto',
-          cvDeletedAt: { $lte: now },
-          cvUrl: { $exists: true, $ne: null }
-        })
-
-        for (const application of applicationsToDelete) {
-          try {
-            // Delete CV from Cloudinary
-            const publicId = extractPublicIdFromUrl(application.cvUrl)
-            if (publicId) {
-              await deleteCloudinaryFile(publicId)
-              console.log('CV automatically deleted from Cloudinary:', publicId)
-            }
-            
-            // Mark CV as deleted and remove fields from database
-            await JobApplication.findByIdAndUpdate(
-              application._id,
-              { 
-                $unset: { cvUrl: "", cvFileName: "" },
-                $set: {
-                  cvDeleted: true
-                }
-              }
-            )
-            
-            console.log('CV automatically deleted for application:', application._id)
-          } catch (error) {
-            console.error('Error deleting CV for application', application._id, ':', error)
-          }
-        }
-
-        if (applicationsToDelete.length > 0) {
-          console.log(`🗑️ Cleaned up ${applicationsToDelete.length} rejected CVs`)
-        }
-      } catch (error) {
-        console.error('❌ Error cleaning up rejected CVs:', error)
-      }
-    })
-    console.log('✅ Scheduled cleanup job for rejected CVs')
-
     // --- Orphaned CV Cleanup job (handle records marked as deleted but still have CV data)
     schedule.scheduleJob('*/5 * * * *', async () => {
       try {
