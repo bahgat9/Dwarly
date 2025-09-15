@@ -180,7 +180,10 @@ router.get('/:id/applications', auth(), requireRole('academy'), safeHandler(asyn
     return res.status(403).json({ error: 'Not authorized to view applications for this job' });
   }
   
-  const applications = await JobApplication.find({ job: req.params.id })
+  const applications = await JobApplication.find({ 
+    job: req.params.id,
+    hiddenFromAcademy: { $ne: true } // Filter out hidden applications
+  })
     .populate('applicant', 'name email phone')
     .sort({ createdAt: -1 });
   
@@ -255,18 +258,35 @@ router.delete('/:id/applications/:applicationId', auth(), requireRole('academy')
       const publicId = extractPublicIdFromUrl(application.cvUrl);
       if (publicId) {
         await deleteCloudinaryFile(publicId);
-        console.log('CV deleted from Cloudinary during application deletion:', publicId);
+        console.log('CV deleted from Cloudinary during application hiding:', publicId);
       }
     }
     
-    // Delete the entire application from database
-    await JobApplication.findByIdAndDelete(req.params.applicationId);
+    // Hide application from academy and mark as rejected
+    const updatedApplication = await JobApplication.findByIdAndUpdate(
+      req.params.applicationId,
+      { 
+        $unset: { cvUrl: "", cvFileName: "" },
+        $set: {
+          status: 'rejected',
+          cvDeleted: true,
+          cvDeletedAt: new Date(),
+          cvDeletedBy: req.user.id,
+          cvDeletionReason: 'academy_rejected_manual',
+          hiddenFromAcademy: true,
+          hiddenAt: new Date(),
+          reviewedBy: req.user.id,
+          reviewedAt: new Date()
+        }
+      },
+      { new: true }
+    );
     
-    console.log('Application completely deleted:', req.params.applicationId);
-    res.json({ message: 'Application deleted successfully' });
+    console.log('Application hidden from academy and marked as rejected:', req.params.applicationId);
+    res.json({ message: 'Application removed from your view successfully', application: updatedApplication });
   } catch (error) {
-    console.error('Error deleting application:', error);
-    res.status(500).json({ error: 'Failed to delete application' });
+    console.error('Error hiding application:', error);
+    res.status(500).json({ error: 'Failed to remove application' });
   }
 }));
 

@@ -162,6 +162,43 @@ async function start() {
     })
     console.log('✅ Scheduled cleanup job for orphaned CVs')
 
+    // --- Hidden Applications Cleanup job (delete applications hidden from academy after 5 days)
+    schedule.scheduleJob('0 2 * * *', async () => { // Run daily at 2 AM
+      try {
+        const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) // 5 days ago
+        const hiddenApplications = await JobApplication.find({
+          hiddenFromAcademy: true,
+          hiddenAt: { $lte: fiveDaysAgo }
+        })
+
+        for (const application of hiddenApplications) {
+          try {
+            // Delete CV from Cloudinary if it still exists
+            if (application.cvUrl) {
+              const publicId = extractPublicIdFromUrl(application.cvUrl)
+              if (publicId) {
+                await deleteCloudinaryFile(publicId)
+                console.log('CV deleted from Cloudinary during final cleanup:', publicId)
+              }
+            }
+            
+            // Delete the entire application from database
+            await JobApplication.findByIdAndDelete(application._id)
+            console.log('Hidden application permanently deleted:', application._id)
+          } catch (error) {
+            console.error('Error deleting hidden application', application._id, ':', error)
+          }
+        }
+
+        if (hiddenApplications.length > 0) {
+          console.log(`🗑️ Permanently deleted ${hiddenApplications.length} hidden applications after 5 days`)
+        }
+      } catch (error) {
+        console.error('❌ Error cleaning up hidden applications:', error)
+      }
+    })
+    console.log('✅ Scheduled cleanup job for hidden applications (5 days)')
+
     // --- Seed admin
     const adminEmail = 'admin@dwarly.eg'
     const adminPass = 'DWARLY-Admin#2025'

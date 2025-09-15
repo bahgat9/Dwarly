@@ -202,7 +202,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
   }
 
   const handleDeleteApplication = async (applicationId) => {
-    if (!confirm('Are you sure you want to completely delete this application? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to remove this application from your view? The applicant will still see it as rejected, and it will be permanently deleted after 5 days.')) {
       return
     }
     
@@ -210,11 +210,11 @@ function ApplicationsModal({ job, isOpen, onClose }) {
       await api(`/api/jobs/${job._id}/applications/${applicationId}`, {
         method: 'DELETE'
       })
-      console.log('Application deleted successfully')
+      console.log('Application removed from view successfully')
       loadApplications() // Refresh the list
     } catch (err) {
-      console.error('Failed to delete application:', err)
-      alert('Failed to delete application')
+      console.error('Failed to remove application:', err)
+      alert('Failed to remove application')
     }
   }
 
@@ -456,7 +456,7 @@ function ApplicationsModal({ job, isOpen, onClose }) {
                         className="py-2 px-4 bg-red-600/20 text-red-200 text-sm font-medium rounded-lg hover:bg-red-600/30 transition-all flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
-                        Delete Application
+                        Remove from View
                       </button>
                     </div>
                   </div>

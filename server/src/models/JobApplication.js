@@ -64,6 +64,13 @@ const jobApplicationSchema = new mongoose.Schema({
     type: String,
     enum: ['user_removed', 'academy_rejected_manual', 'academy_rejected_auto'],
     trim: true
+  },
+  hiddenFromAcademy: {
+    type: Boolean,
+    default: false
+  },
+  hiddenAt: {
+    type: Date
   }
 }, {
   timestamps: true
