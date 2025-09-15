@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { api } from '../api'
 import { useLanguage } from '../context/LanguageContext'
+import { useRealtimeData } from '../hooks/useRealtimeData.js'
 
 // Job Application Status Badge Component
 function StatusBadge({ status }) {
@@ -468,42 +469,45 @@ function JobApplicationModal({ job, isOpen, onClose, onSubmit }) {
 // Main Component
 export default function JobOpportunities() {
   const { t } = useLanguage()
-  const [jobs, setJobs] = useState([])
-  const [userApplications, setUserApplications] = useState([])
-  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [selectedJob, setSelectedJob] = useState(null)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
 
-  // Load jobs and user applications
+  // Real-time data for jobs
+  const {
+    data: jobsData,
+    loading: jobsLoading,
+    error: jobsError,
+    refresh: refreshJobs
+  } = useRealtimeData('/api/jobs', {
+    interval: 30000 // Poll every 30 seconds
+  })
+
+  // Real-time data for user applications
+  const {
+    data: userApplicationsData,
+    loading: applicationsLoading,
+    error: applicationsError,
+    refresh: refreshApplications
+  } = useRealtimeData('/api/job-applications/my', {
+    interval: 2000, // Poll every 2 seconds for faster status updates
+    enabled: true // Always enabled, will handle auth errors gracefully
+  })
+
+  const jobs = Array.isArray(jobsData) ? jobsData : []
+  const userApplications = Array.isArray(userApplicationsData) ? userApplicationsData : []
+  const loading = jobsLoading || applicationsLoading
+
+  // Load jobs initially
   useEffect(() => {
-    loadData()
+    refreshJobs()
   }, [])
 
-  async function loadData() {
-    try {
-      setLoading(true)
-      
-      // Always load jobs
-      const jobsData = await api('/api/jobs')
-      setJobs(Array.isArray(jobsData) ? jobsData : [])
-      
-      // Try to load user applications, but don't fail if not authenticated
-      try {
-        const applicationsData = await api('/api/job-applications/my')
-        setUserApplications(Array.isArray(applicationsData) ? applicationsData : [])
-      } catch (authError) {
-        // User is not authenticated, set empty applications
-        setUserApplications([])
-      }
-      
-    } catch (error) {
-      console.error('Failed to load data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Load user applications initially
+  useEffect(() => {
+    refreshApplications()
+  }, [])
 
   // Filter jobs based on search and type
   const filteredJobs = useMemo(() => {
@@ -531,7 +535,7 @@ export default function JobOpportunities() {
   }
 
   const handleApplicationSubmit = () => {
-    loadData() // Refresh data to show updated application status
+    refreshApplications() // Refresh applications to show updated status
   }
 
 

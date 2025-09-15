@@ -45,9 +45,17 @@ export function useRealtimeData(endpoint, options = {}) {
       }
     } catch (err) {
       if (isMountedRef.current) {
-        console.error(`Failed to fetch data from ${endpoint}:`, err)
-        setError(err.message)
-        setLoading(false)
+        // Handle authentication errors gracefully for job applications
+        if (endpoint.includes('/job-applications/my') && (err.message.includes('401') || err.message.includes('Unauthorized'))) {
+          // User is not authenticated, set empty data
+          setData([])
+          setError(null)
+          setLoading(false)
+        } else {
+          console.error(`Failed to fetch data from ${endpoint}:`, err)
+          setError(err.message)
+          setLoading(false)
+        }
       }
     }
   }, [endpoint, onUpdate])
