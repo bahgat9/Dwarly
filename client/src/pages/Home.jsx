@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Shield, Trophy, Users, Star, MapPin, Calendar, Users2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../context/LanguageContext'
+import VideoEntrance from '../components/VideoEntrance'
 
 const InfoCard = ({ icon, title, text, delay = 0 }) => (
   <motion.div
@@ -29,12 +30,29 @@ const FeatureHighlight = ({ icon, title, description }) => (
 
 export default function Home(){
   const { t } = useLanguage()
+  const [showVideoEntrance, setShowVideoEntrance] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timer);
+    // Check if user has seen the video entrance before
+    const hasSeenEntrance = localStorage.getItem('dwarly-video-entrance-seen');
+    if (hasSeenEntrance) {
+      setShowVideoEntrance(false);
+      setIsLoading(false);
+    } else {
+      // Show video entrance for first-time visitors
+      setIsLoading(false);
+    }
   }, []);
+
+  const handleVideoComplete = () => {
+    setShowVideoEntrance(false);
+    localStorage.setItem('dwarly-video-entrance-seen', 'true');
+  };
+
+  if (showVideoEntrance) {
+    return <VideoEntrance onComplete={handleVideoComplete} />;
+  }
 
   if (isLoading) {
     return (
@@ -92,6 +110,15 @@ export default function Home(){
               >
                 💼 {t("public.jobOpportunities")}
               </Link>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('dwarly-video-entrance-seen');
+                  setShowVideoEntrance(true);
+                }}
+                className="px-6 md:px-8 py-3 md:py-4 rounded-2xl bg-purple-600/20 text-purple-300 font-bold text-base md:text-lg border border-purple-500/30 hover:bg-purple-600/30 hover:scale-105 transition-all duration-300 text-center"
+              >
+                🎬 Replay Intro
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
