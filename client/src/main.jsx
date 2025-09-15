@@ -6,18 +6,15 @@ import App from './App.jsx'
 import './styles.css'
 import { AuthProvider } from './context/AuthContext.jsx' // ✅ import
 import { LanguageProvider } from './context/LanguageContext.jsx'
-import { RealtimeProvider } from './context/RealtimeContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
     <LanguageProvider>
       <AuthProvider>  {/* ✅ wrap the app */}
-        <RealtimeProvider>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        </RealtimeProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </AuthProvider>
     </LanguageProvider>
   </BrowserRouter>

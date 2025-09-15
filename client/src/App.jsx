@@ -28,8 +28,6 @@ import LoadingSkeleton from "./components/LoadingSkeleton.jsx" // ✅ skeleton
 
 import { useAuth } from "./context/AuthContext";
 import { useLanguage } from "./context/LanguageContext";
-import { useRealtime } from "./context/RealtimeContext";
-import RealtimeStatusIndicator from "./components/RealtimeStatusIndicator.jsx";
 
 // ✅ new academy pages
 import AcademyMatchRequests from "./pages/academy/AcademyMatchRequests.jsx"
@@ -60,11 +58,8 @@ const Page = ({ children }) => (
 export default function App() {
   const { user: session, loading, logout: authLogout } = useAuth();
   const { t } = useLanguage();
-  const { showInfo } = useRealtime();
   const [academies, setAcademies] = useState([])
   const [matches, setMatches] = useState([])
-  const [isRealtimeActive, setIsRealtimeActive] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState(null)
 
   const location = useLocation()
   const navigate = useNavigate()
@@ -72,15 +67,12 @@ export default function App() {
   // Load basic data (academies + matches)
   async function loadBasics() {
     try {
-      setIsRealtimeActive(true)
       const a = await api("/api/academies")
       setAcademies(a)
       const m = await api("/api/matches")
       setMatches(m)
-      setLastUpdate(new Date())
     } catch (e) {
       console.error("Failed to load basics:", e)
-      setIsRealtimeActive(false)
     }
   }
 
@@ -233,12 +225,6 @@ export default function App() {
           </div>
         )}
     </div>
-    
-    {/* Realtime Status Indicator */}
-    <RealtimeStatusIndicator 
-      isActive={isRealtimeActive} 
-      lastUpdated={lastUpdate} 
-    />
     </>
   )
 }

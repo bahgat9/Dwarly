@@ -104,10 +104,14 @@ export function useRealtimeStatus(endpoint, options = {}) {
   const [hasChanges, setHasChanges] = useState(false)
 
   const onUpdate = useCallback((newData) => {
-    if (previousData && JSON.stringify(previousData) !== JSON.stringify(newData)) {
-      setHasChanges(true)
-      // Reset hasChanges after 3 seconds
-      setTimeout(() => setHasChanges(false), 3000)
+    if (previousData) {
+      // More sophisticated change detection
+      const hasChanged = JSON.stringify(previousData) !== JSON.stringify(newData)
+      if (hasChanged) {
+        setHasChanges(true)
+        // Reset hasChanges after 2 seconds
+        setTimeout(() => setHasChanges(false), 2000)
+      }
     }
     setPreviousData(newData)
   }, [previousData])
