@@ -5,6 +5,8 @@ import { api } from "../../api"
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx"
 import Pagination from "../../components/Pagination.jsx"
 import { motion } from "framer-motion"
+import { useRealtimeData, useRealtimeStatus } from "../../hooks/useRealtimeData.js"
+import { useRealtime } from "../../context/RealtimeContext.jsx"
 
 function Card({ children, className = "" }) {
   return (
@@ -42,29 +44,69 @@ function Badge({ status }) {
 }
 
 export default function UserDashboard({ session }) {
-  const [requests, setRequests] = useState([])
-  const [matches, setMatches] = useState([])
-  const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
+  const { showSuccess, showInfo } = useRealtime()
 
-  async function loadData(p = 1) {
-    try {
-      setLoading(true)
-      const r = await api(`/api/playerRequests/my?page=${p}&limit=5`)
-      const m = await api("/api/matches/upcoming")
-      setRequests(r.items || [])
-      setPages(r.pages || 1)
-      setPage(r.page || 1)
-      setMatches(m || [])
-    } catch (err) {
-      console.error("Failed to load user dashboard data:", err)
-    } finally {
-      setLoading(false)
+  // Real-time data for requests
+  const {
+    data: requestsData,
+    loading: requestsLoading,
+    error: requestsError,
+    refresh: refreshRequests,
+    hasChanges: requestsChanged
+  } = useRealtimeStatus(`/api/playerRequests/my?page=${page}&limit=5`, {
+    interval: 3000, // Poll every 3 seconds
+    dependencies: [page]
+  })
+
+  // Real-time data for matches
+  const {
+    data: matchesData,
+    loading: matchesLoading,
+    error: matchesError,
+    refresh: refreshMatches,
+    hasChanges: matchesChanged
+  } = useRealtimeStatus("/api/matches/upcoming", {
+    interval: 5000 // Poll every 5 seconds
+  })
+
+  const requests = requestsData?.items || []
+  const matches = matchesData || []
+
+  // Show notifications when data changes
+  useEffect(() => {
+    if (requestsChanged && requests.length > 0) {
+      const pendingCount = requests.filter(r => r.status === "pending").length
+      const approvedCount = requests.filter(r => r.status === "approved").length
+      const rejectedCount = requests.filter(r => r.status === "rejected").length
+      
+      if (approvedCount > 0) {
+        showSuccess(`🎉 ${approvedCount} request(s) approved!`)
+      }
+      if (rejectedCount > 0) {
+        showInfo(`📝 ${rejectedCount} request(s) need attention`)
+      }
     }
-  }
+  }, [requestsChanged, requests, showSuccess, showInfo])
 
-  useEffect(() => { loadData(1) }, [])
+  useEffect(() => {
+    if (matchesChanged && matches.length > 0) {
+      showInfo(`⚽ ${matches.length} upcoming match(es) available`)
+    }
+  }, [matchesChanged, matches, showInfo])
+
+  // Update pages when requests data changes
+  useEffect(() => {
+    if (requestsData) {
+      setPages(requestsData.pages || 1)
+      setPage(requestsData.page || 1)
+    }
+  }, [requestsData])
+
+  const loadData = (p = 1) => {
+    setPage(p)
+  }
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 space-y-8">
@@ -120,8 +162,18 @@ export default function UserDashboard({ session }) {
 
       {/* Requests */}
       <Card>
-        <h2 className="text-2xl font-bold text-white mb-6">My Academy Requests</h2>
-        {loading ? (
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">My Academy Requests</h2>
+          {requestsChanged && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-3 h-3 bg-green-400 rounded-full"
+              title="Data updated"
+            />
+          )}
+        </div>
+        {requestsLoading ? (
           <LoadingSkeleton lines={3} />
         ) : requests.length === 0 ? (
           <div className="text-center py-6 text-white/70">
@@ -147,8 +199,18 @@ export default function UserDashboard({ session }) {
 
       {/* Matches Timeline */}
       <Card>
-        <h2 className="text-2xl font-bold text-white mb-6">Upcoming Matches</h2>
-        {loading ? (
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Upcoming Matches</h2>
+          {matchesChanged && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-3 h-3 bg-blue-400 rounded-full"
+              title="Data updated"
+            />
+          )}
+        </div>
+        {matchesLoading ? (
           <LoadingSkeleton lines={3} />
         ) : matches.length === 0 ? (
           <p className="text-white/70">No upcoming matches yet.</p>

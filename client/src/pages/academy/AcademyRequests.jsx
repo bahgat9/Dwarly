@@ -3,29 +3,50 @@ import { api } from "../../api"
 import Pagination from "../../components/Pagination"
 import LoadingSkeleton from "../../components/LoadingSkeleton.jsx"
 import { useLanguage } from "../../context/LanguageContext"
+import { useRealtimeData, useRealtimeStatus } from "../../hooks/useRealtimeData.js"
+import { useRealtime } from "../../context/RealtimeContext.jsx"
+import { motion } from "framer-motion"
 
 export default function AcademyRequests({ session }) {
   const { t } = useLanguage()
-  const [requests, setRequests] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { showSuccess, showInfo, showError } = useRealtime()
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
 
-  async function loadRequests(p = 1) {
-    try {
-      setLoading(true)
-      const data = await api(
-        `/api/playerRequests/academy/${session.academyId}?page=${p}&limit=5`
-      )
-      setRequests(data.items || [])
-      setPages(data.pages || 1)
-      setPage(data.page || 1)
-    } catch (err) {
-      console.error("Failed to load requests:", err)
-      alert("⚠️ Failed to load requests")
-    } finally {
-      setLoading(false)
+  // Real-time data for requests
+  const {
+    data: requestsData,
+    loading: requestsLoading,
+    error: requestsError,
+    refresh: refreshRequests,
+    hasChanges: requestsChanged
+  } = useRealtimeStatus(`/api/playerRequests/academy/${session.academyId}?page=${page}&limit=5`, {
+    interval: 2000, // Poll every 2 seconds for academy requests
+    dependencies: [page]
+  })
+
+  const requests = requestsData?.items || []
+
+  // Update pages when requests data changes
+  useEffect(() => {
+    if (requestsData) {
+      setPages(requestsData.pages || 1)
+      setPage(requestsData.page || 1)
     }
+  }, [requestsData])
+
+  // Show notifications when new requests arrive
+  useEffect(() => {
+    if (requestsChanged && requests.length > 0) {
+      const newRequests = requests.filter(r => r.status === "pending")
+      if (newRequests.length > 0) {
+        showInfo(`📥 ${newRequests.length} new request(s) received`)
+      }
+    }
+  }, [requestsChanged, requests, showInfo])
+
+  async function loadRequests(p = 1) {
+    setPage(p)
   }
 
   async function updateStatus(id, status) {
@@ -37,20 +58,22 @@ export default function AcademyRequests({ session }) {
         return
       }
 
-      // Optimistic UI update
-      setRequests((prev) =>
-        prev.map((r) => (r._id === id ? { ...r, status } : r))
-      )
-
       await api(`/api/playerRequests/academy/${session.academyId}/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status })
       })
+
+      // Show success notification
+      const request = requests.find(r => r._id === id)
+      if (request) {
+        showSuccess(`✅ Request from ${request.userName} ${status}`)
+      }
+
+      // Refresh data to get latest state
+      refreshRequests()
     } catch (err) {
       console.error("Failed to update request:", err)
-      alert("⚠️ Failed to update request")
-      // Reload from backend to avoid stale state
-      loadRequests(page)
+      showError("⚠️ Failed to update request")
     }
   }
 
@@ -59,22 +82,30 @@ export default function AcademyRequests({ session }) {
       await api(`/api/playerRequests/academy/${session.academyId}/${id}`, {
         method: "DELETE",
       })
-      setRequests(prev => prev.filter(r => r._id !== id))
+      
+      showSuccess("🗑️ Request deleted successfully")
+      refreshRequests()
     } catch (err) {
       console.error("Failed to delete request:", err)
-      alert("⚠️ Failed to delete request")
+      showError("⚠️ Failed to delete request")
     }
   }
 
-  useEffect(() => {
-    loadRequests(1)
-  }, [])
-
   return (
     <div className="max-w-5xl mx-auto py-10 space-y-6">
-      <h1 className="text-2xl font-bold">📥 {t("academyRequests.title")}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">📥 {t("academyRequests.title")}</h1>
+        {requestsChanged && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-3 h-3 bg-green-400 rounded-full"
+            title="Data updated"
+          />
+        )}
+      </div>
 
-      {loading ? (
+      {requestsLoading ? (
         <LoadingSkeleton lines={5} />
       ) : requests.length === 0 ? (
         <p className="text-white/70">{t("academyRequests.noRequests")}</p>
