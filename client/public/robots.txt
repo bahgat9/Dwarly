@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://dwarly.vercel.app/sitemap.xml
+
+# Disallow private/admin areas
+Disallow: /admin/
+Disallow: /academy/
+Disallow: /user/
+Disallow: /api/
+
+# Allow important public pages
+Allow: /
+Allow: /academies
+Allow: /job-opportunities
+Allow: /login
+Allow: /signup
+Allow: /academy-request
+
+# Crawl delay (optional - helps prevent overloading)
+Crawl-delay: 1
