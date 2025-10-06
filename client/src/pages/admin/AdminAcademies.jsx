@@ -287,6 +287,7 @@ export default function AdminAcademies({ session }) {
 
       console.log("Branch creation response:", updated)
       console.log("Updated academy branches:", updated?.branches)
+      console.log("Branch details:", updated?.branches?.[updated.branches.length - 1])
 
       // Update local list
       setList((prev) => prev.map((a) => (a._id === updated._id ? updated : a)))
@@ -388,19 +389,29 @@ export default function AdminAcademies({ session }) {
                   <div className="mt-3 text-sm opacity-90 flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                        {a.branches.length} branches
+                        {a.branches.length} branch{a.branches.length > 1 ? 'es' : ''}
                       </span>
+                      <span className="text-xs text-green-400">✓ Branches Active</span>
                     </div>
                     {(() => {
                       const mainBranch = a.branches.find(b => b.isMain) || a.branches[0]
+                      console.log("Rendering branch info for academy:", a.name, "Main branch:", mainBranch)
                       return (
                         <>
+                          <div className="font-medium text-accent-400">
+                            🏢 {mainBranch?.name || "Main Branch"}
+                          </div>
                           <div>
                             📍 {mainBranch?.locationDescription || 
                               (mainBranch?.locationGeo ? `${mainBranch.locationGeo.lat}, ${mainBranch.locationGeo.lng}` : "—")}
                           </div>
                           <div>☎ {mainBranch?.phone || a.phone || "—"}</div>
                           {mainBranch?.contact && <div>✉ {mainBranch.contact}</div>}
+                          {mainBranch?.description && (
+                            <div className="text-xs opacity-75 mt-1">
+                              {mainBranch.description.substring(0, 50)}...
+                            </div>
+                          )}
                         </>
                       )
                     })()}
@@ -466,6 +477,35 @@ export default function AdminAcademies({ session }) {
                       ))}
                       {a.trainingTimes.length > 2 && <li>+{a.trainingTimes.length - 2} more…</li>}
                     </ul>
+                  </div>
+                )}
+
+                {/* All Branches List */}
+                {Array.isArray(a.branches) && a.branches.length > 1 && (
+                  <div className="mt-3 text-xs opacity-80 bg-white/5 p-2 rounded">
+                    <div className="font-semibold mb-1">All Branches:</div>
+                    {a.branches.map((branch, i) => (
+                      <div key={i} className="ml-2 flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${branch.isMain ? 'bg-green-400' : 'bg-blue-400'}`}></span>
+                        <span>{branch.name} {branch.isMain ? '(Main)' : ''}</span>
+                        {branch.locationDescription && (
+                          <span className="opacity-60">- {branch.locationDescription.substring(0, 20)}...</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Debug: Branch data */}
+                {Array.isArray(a.branches) && a.branches.length > 0 && (
+                  <div className="mt-3 text-xs opacity-60 bg-white/5 p-2 rounded">
+                    <div className="font-semibold mb-1">Debug - Branch Data:</div>
+                    <div>Total: {a.branches.length}</div>
+                    {a.branches.map((branch, i) => (
+                      <div key={i} className="ml-2">
+                        {i + 1}. {branch.name} {branch.isMain ? '(Main)' : ''}
+                      </div>
+                    ))}
                   </div>
                 )}
 

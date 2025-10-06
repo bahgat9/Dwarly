@@ -13,6 +13,7 @@ const TrainingTimeSchema = new mongoose.Schema(
 const BranchSchema = new mongoose.Schema(
   {
     name: { type: String, default: "Main Branch" },
+    nameAr: { type: String },
     // Textual address/description
     locationDescription: { type: String, default: "" },
     // Coordinates for maps
@@ -21,7 +22,15 @@ const BranchSchema = new mongoose.Schema(
       lng: { type: Number },
     },
     phone: { type: String },
+    contact: { type: String },
+    description: { type: String },
+    rating: { type: Number, default: 4 },
+    verified: { type: Boolean, default: false },
+    offersGirls: { type: Boolean, default: true },
+    offersBoys: { type: Boolean, default: true },
+    subscriptionPrice: { type: Number, default: 0 },
     trainingTimes: [TrainingTimeSchema],
+    ages: [{ type: String }],
     // Optional flag to indicate default branch used for previews
     isMain: { type: Boolean, default: false },
   },

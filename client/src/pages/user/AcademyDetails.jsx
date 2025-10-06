@@ -115,6 +115,19 @@ export default function AcademyDetails() {
         </div>
       </div>
 
+      {/* Debug info */}
+      {academy && (
+        <div className="bg-yellow-500/20 text-yellow-300 p-4 rounded-xl text-sm">
+          <div className="font-semibold mb-2">Debug Info:</div>
+          <div>Academy ID: {academy._id}</div>
+          <div>Branches: {academy.branches?.length || 0}</div>
+          <div>Current Branch Index: {branchIndex}</div>
+          {academy.branches?.length > 0 && (
+            <div>Current Branch: {academy.branches[branchIndex]?.name || 'Unknown'}</div>
+          )}
+        </div>
+      )}
+
       {/* Branch slider */}
       {Array.isArray(academy.branches) && academy.branches.length > 0 && (
         <div className="bg-white/10 rounded-2xl p-6 shadow">
@@ -175,15 +188,18 @@ export default function AcademyDetails() {
           </div>
           {/* Dots */}
           <div className="mt-3 flex items-center justify-center gap-2">
-            {academy.branches.map((_, i) => (
+            {academy.branches.map((branch, i) => (
               <button
                 key={i}
                 className={`w-2.5 h-2.5 rounded-full ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`}
                 onClick={() => setBranchIndex(i)}
+                title={`${branch.name} ${branch.isMain ? '(Main)' : ''}`}
               />
             ))}
           </div>
-          <div className="mt-2 text-xs text-white/60 text-center">Swipe horizontally on mobile to change branch</div>
+          <div className="mt-2 text-xs text-white/60 text-center">
+            Swipe horizontally on mobile to change branch • {branchIndex + 1} of {academy.branches.length}
+          </div>
         </div>
       )}
 

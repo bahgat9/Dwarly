@@ -49,6 +49,7 @@ router.get(
       Academy.countDocuments(),
     ]);
 
+    console.log("Fetched academies:", items.length, "First academy branches:", items[0]?.branches?.length || 0)
     res.json({
       success: true,
       data: items,
@@ -65,6 +66,7 @@ router.get(
   safeHandler(async (req, res) => {
     const academy = await Academy.findById(req.params.id)
     if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    console.log("Fetching academy:", academy.name, "Branches:", academy.branches?.length || 0)
     res.json({ success: true, data: academy })
   })
 )
@@ -228,6 +230,7 @@ router.post(
       trainingTimes: safeJSONParse(b.trainingTimes) || [],
       ages: safeJSONParse(b.ages) || [],
     }
+    console.log("Processed branch update object:", update)
     const academy = await Academy.findByIdAndUpdate(
       req.params.id,
       { $push: { branches: update } },
@@ -243,6 +246,12 @@ router.post(
       await academy.save()
     }
     console.log("Academy after branch creation:", academy.branches)
+    console.log("Total branches now:", academy.branches?.length || 0)
+    
+    // Verify the branch was actually saved
+    const verifyAcademy = await Academy.findById(req.params.id)
+    console.log("Verification - Academy branches in DB:", verifyAcademy?.branches?.length || 0)
+    
     res.status(201).json({ success: true, data: academy })
   })
 )
