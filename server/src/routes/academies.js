@@ -58,6 +58,18 @@ router.get(
 );
 
 /**
+ * 📌 Get single academy by id (public)
+ */
+router.get(
+  "/:id",
+  safeHandler(async (req, res) => {
+    const academy = await Academy.findById(req.params.id)
+    if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    res.json({ success: true, data: academy })
+  })
+)
+
+/**
  * 📌 Create new academy (admin only, with optional logo file)
  */
 router.post(
@@ -94,6 +106,24 @@ router.post(
       ages: safeJSONParse(b.ages) || [],
       trainingTimes: safeJSONParse(b.trainingTimes) || [],
       logo: logoUrl,
+      // Initialize branches: if branch info provided, seed; else seed from top-level fields
+      branches: (() => {
+        const provided = safeJSONParse(b.branches)
+        if (Array.isArray(provided) && provided.length) return provided
+        // Seed a single main branch from top-level location/phone/trainingTimes
+        const geo = safeJSONParse(b.locationGeo)
+        const times = safeJSONParse(b.trainingTimes) || []
+        return [
+          {
+            name: "Main Branch",
+            isMain: true,
+            locationDescription: b.locationDescription || "",
+            locationGeo: geo || undefined,
+            phone: b.phone || "",
+            trainingTimes: times,
+          },
+        ]
+      })(),
     });
 
     res.status(201).json({ success: true, data: academy });
@@ -139,6 +169,8 @@ router.patch(
           ages: safeJSONParse(b.ages) || [],
           trainingTimes: safeJSONParse(b.trainingTimes) || [],
           logo: logoUrl,
+          // Accept full replacement of branches if provided
+          ...(b.branches ? { branches: safeJSONParse(b.branches) || [] } : {}),
         },
       },
       { new: true }
@@ -167,6 +199,91 @@ router.delete(
     res.json({ success: true, message: "Academy deleted successfully" });
   })
 );
+
+/**
+ * 📌 Add a branch to an academy (admin)
+ */
+router.post(
+  "/:id/branches",
+  auth(),
+  requireRole("admin"),
+  safeHandler(async (req, res) => {
+    const b = req.body
+    const update = {
+      name: b.name || "Branch",
+      isMain: !!b.isMain,
+      locationDescription: b.locationDescription || "",
+      locationGeo: safeJSONParse(b.locationGeo),
+      phone: b.phone || "",
+      trainingTimes: safeJSONParse(b.trainingTimes) || [],
+    }
+    const academy = await Academy.findByIdAndUpdate(
+      req.params.id,
+      { $push: { branches: update } },
+      { new: true }
+    )
+    if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    // If setting isMain, unset others
+    if (update.isMain) {
+      academy.branches = academy.branches.map((br, idx) => {
+        if (idx === academy.branches.length - 1) return { ...br.toObject?.() || br, isMain: true }
+        return { ...br.toObject?.() || br, isMain: false }
+      })
+      await academy.save()
+    }
+    res.status(201).json({ success: true, data: academy })
+  })
+)
+
+/**
+ * 📌 Update a branch by index (admin)
+ */
+router.patch(
+  "/:id/branches/:index",
+  auth(),
+  requireRole("admin"),
+  safeHandler(async (req, res) => {
+    const academy = await Academy.findById(req.params.id)
+    if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    const idx = Number(req.params.index)
+    if (Number.isNaN(idx) || idx < 0 || idx >= academy.branches.length) {
+      return res.status(400).json({ success: false, error: "Invalid branch index" })
+    }
+    const b = req.body
+    const branch = academy.branches[idx]
+    if (b.name !== undefined) branch.name = b.name
+    if (b.locationDescription !== undefined) branch.locationDescription = b.locationDescription
+    if (b.locationGeo !== undefined) branch.locationGeo = safeJSONParse(b.locationGeo)
+    if (b.phone !== undefined) branch.phone = b.phone
+    if (b.trainingTimes !== undefined) branch.trainingTimes = safeJSONParse(b.trainingTimes) || []
+    if (b.isMain !== undefined) branch.isMain = !!b.isMain
+    if (branch.isMain) {
+      academy.branches = academy.branches.map((br, i) => ({ ...br.toObject?.() || br, isMain: i === idx }))
+    }
+    await academy.save()
+    res.json({ success: true, data: academy })
+  })
+)
+
+/**
+ * 📌 Delete a branch by index (admin)
+ */
+router.delete(
+  "/:id/branches/:index",
+  auth(),
+  requireRole("admin"),
+  safeHandler(async (req, res) => {
+    const academy = await Academy.findById(req.params.id)
+    if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    const idx = Number(req.params.index)
+    if (Number.isNaN(idx) || idx < 0 || idx >= academy.branches.length) {
+      return res.status(400).json({ success: false, error: "Invalid branch index" })
+    }
+    academy.branches.splice(idx, 1)
+    await academy.save()
+    res.json({ success: true, data: academy })
+  })
+)
 
 // Mount subrouters
 router.use('/:academyId/players', academyPlayers);

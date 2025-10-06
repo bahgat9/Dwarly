@@ -9,6 +9,25 @@ const TrainingTimeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Each academy can have one or more branches (locations)
+const BranchSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: "Main Branch" },
+    // Textual address/description
+    locationDescription: { type: String, default: "" },
+    // Coordinates for maps
+    locationGeo: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
+    phone: { type: String },
+    trainingTimes: [TrainingTimeSchema],
+    // Optional flag to indicate default branch used for previews
+    isMain: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
 const AcademySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -36,6 +55,10 @@ const AcademySchema = new mongoose.Schema(
     subscriptionPrice: { type: Number, default: 0 },
 
     trainingTimes: [TrainingTimeSchema],
+
+    // New: branches (at least one). For backward compatibility, existing fields above
+    // represent the historical single-branch data. New UIs should prefer `branches`.
+    branches: { type: [BranchSchema], default: [] },
 
     // 🔹 Store Cloudinary URL instead of Base64
     logo: { type: String }, // e.g. "https://res.cloudinary.com/xxx/image/upload/v12345/academy.png"

@@ -296,6 +296,40 @@ export default function Academies({ session, adminMode = false }) {
               )}
             </div>
 
+            {/* Branch preview + count */}
+            {(() => {
+              const mainBranch = (a.branches || []).find(b => b.isMain) || (a.branches || [])[0]
+              const hasBranches = Array.isArray(a.branches) && a.branches.length > 0
+              const locationText = mainBranch?.locationDescription
+                || (mainBranch?.locationGeo ? `${mainBranch.locationGeo.lat}, ${mainBranch.locationGeo.lng}` : null)
+              return (
+                <div className="mt-3 text-sm opacity-90 flex items-center justify-between gap-2">
+                  <div className="truncate">
+                    {hasBranches ? (
+                      <>
+                        <span className="mr-1">📍</span>
+                        <span className="truncate inline-block align-middle max-w-[14rem]">
+                          {locationText || a.locationDescription || (typeof a.location === 'object' ? `${a.location.lat}, ${a.location.lng}` : a.location) || "—"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="mr-1">📍</span>
+                        <span className="truncate inline-block align-middle max-w-[14rem]">
+                          {a.locationDescription || (typeof a.location === 'object' ? `${a.location.lat}, ${a.location.lng}` : a.location) || "—"}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {hasBranches && (
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-white/10 border border-white/20">
+                      {a.branches.length} branches
+                    </span>
+                  )}
+                </div>
+              )
+            })()}
+
             {/* Rating */}
             <div className="mt-3 flex items-center gap-1">
               <span>⭐</span>
