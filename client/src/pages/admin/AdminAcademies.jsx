@@ -23,6 +23,9 @@ export default function AdminAcademies({ session }) {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [showAcademySelection, setShowAcademySelection] = useState(false)
+  const [addingBranch, setAddingBranch] = useState(false)
+  const [selectedAcademyForBranch, setSelectedAcademyForBranch] = useState(null)
 
   const [form, setForm] = useState({
     name: "",
@@ -43,6 +46,23 @@ export default function AdminAcademies({ session }) {
     ages: [],
     // we use a file for upload; preview is generated via URL.createObjectURL
     logoFile: null,
+  })
+
+  const [branchForm, setBranchForm] = useState({
+    name: "",
+    nameAr: "",
+    locationDescription: "",
+    locationGeo: null,
+    phone: "",
+    contact: "",
+    description: "",
+    rating: 4,
+    verified: false,
+    offersGirls: true,
+    offersBoys: true,
+    subscriptionPrice: 0,
+    trainingTimes: [],
+    ages: [],
   })
 
   const logoPreviewUrl = useMemo(
@@ -103,6 +123,25 @@ export default function AdminAcademies({ session }) {
       branches: [],
       ages: [],
       logoFile: null,
+    })
+  }
+
+  function resetBranchForm() {
+    setBranchForm({
+      name: "",
+      nameAr: "",
+      locationDescription: "",
+      locationGeo: null,
+      phone: "",
+      contact: "",
+      description: "",
+      rating: 4,
+      verified: false,
+      offersGirls: true,
+      offersBoys: true,
+      subscriptionPrice: 0,
+      trainingTimes: [],
+      ages: [],
     })
   }
 
@@ -204,103 +243,90 @@ export default function AdminAcademies({ session }) {
     }
   }
 
+  async function createBranch() {
+    if (!selectedAcademyForBranch) return
+    setSaving(true)
+    try {
+      if (!branchForm.name || branchForm.name.trim() === "") {
+        alert("Please enter a name for the branch.")
+        setSaving(false)
+        return
+      }
+
+      // Prepare branch data
+      const geo = branchForm.locationGeo && typeof branchForm.locationGeo === "object"
+        ? branchForm.locationGeo
+        : null
+
+      const branchData = {
+        name: branchForm.name.trim(),
+        nameAr: branchForm.nameAr || "",
+        locationDescription: branchForm.locationDescription || "",
+        locationGeo: geo,
+        phone: branchForm.phone || "",
+        contact: branchForm.contact || "",
+        description: branchForm.description || "",
+        rating: Number(branchForm.rating) || 4,
+        verified: !!branchForm.verified,
+        offersGirls: !!branchForm.offersGirls,
+        offersBoys: !!branchForm.offersBoys,
+        subscriptionPrice: Number(branchForm.subscriptionPrice) || 0,
+        trainingTimes: branchForm.trainingTimes || [],
+        ages: branchForm.ages || [],
+        isMain: false, // New branches are not main by default
+      }
+
+      // Add branch to academy
+      const updated = await api(`/api/academies/${selectedAcademyForBranch._id}/branches`, {
+        method: "POST",
+        body: JSON.stringify(branchData),
+        headers: { "Content-Type": "application/json" },
+      })
+
+      // Update local list
+      setList((prev) => prev.map((a) => (a._id === updated._id ? updated : a)))
+      
+      // Reset and close
+      setAddingBranch(false)
+      setSelectedAcademyForBranch(null)
+      resetBranchForm()
+      alert("Branch added successfully!")
+    } catch (err) {
+      console.error(err)
+      alert("Failed to create branch.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 text-white">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-3xl font-extrabold">{t("adminAcademies.title")}</h2>
-        <button
-          onClick={() => {
-            resetForm()
-            setAdding(true)
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-accent-500 text-brand-900 font-semibold shadow hover:bg-accent-600 transition"
-        >
-          <Plus size={16} />
-          {t("adminAcademies.addAcademy")}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              resetForm()
+              setAdding(true)
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-accent-500 text-brand-900 font-semibold shadow hover:bg-accent-600 transition"
+          >
+            <Plus size={16} />
+            {t("adminAcademies.addAcademy")}
+          </button>
+          <button
+            onClick={() => {
+              resetBranchForm()
+              setShowAcademySelection(true)
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition"
+          >
+            <Plus size={16} />
+            Add Branch
+          </button>
+        </div>
       </div>
 
-            {/* Branches manager */}
-            <div className="mt-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold">Branches</div>
-                <button
-                  type="button"
-                  className="px-3 py-1 rounded-xl bg-brand-700 hover:bg-brand-600 text-white text-sm"
-                  onClick={() => setForm((f) => ({
-                    ...f,
-                    branches: [...(f.branches || []), { name: "Branch", isMain: (f.branches?.length ?? 0) === 0, locationDescription: "", locationGeo: null, phone: "", trainingTimes: [] }]
-                  }))}
-                >
-                  Add Branch
-                </button>
-              </div>
-              {(form.branches || []).length === 0 ? (
-                <div className="text-white/60 text-sm">No branches yet. Add the first branch.</div>
-              ) : (
-                <div className="space-y-3">
-                  {(form.branches || []).map((br, i) => (
-                    <div key={i} className="p-3 rounded-xl bg-brand-700/40 border border-brand-600">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Branch #{i + 1}</div>
-                        <div className="flex items-center gap-2">
-                          <label className="inline-flex items-center gap-1 text-xs">
-                            <input
-                              type="checkbox"
-                              checked={!!br.isMain}
-                              onChange={(e) => setForm((f) => ({
-                                ...f,
-                                branches: f.branches.map((b, idx) => ({ ...b, isMain: idx === i ? e.target.checked : false }))
-                              }))}
-                            />
-                            Main
-                          </label>
-                          <button
-                            type="button"
-                            className="px-2 py-1 rounded-lg bg-red-500/20 text-red-300 text-xs"
-                            onClick={() => setForm((f) => ({
-                              ...f,
-                              branches: f.branches.filter((_, idx) => idx !== i)
-                            }))}
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                        <input
-                          className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                          placeholder="Branch name"
-                          value={br.name ?? ""}
-                          onChange={(e) => setForm((f) => ({
-                            ...f,
-                            branches: f.branches.map((b, idx) => idx === i ? { ...b, name: e.target.value } : b)
-                          }))}
-                        />
-                        <input
-                          className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                          placeholder="Location description"
-                          value={br.locationDescription ?? ""}
-                          onChange={(e) => setForm((f) => ({
-                            ...f,
-                            branches: f.branches.map((b, idx) => idx === i ? { ...b, locationDescription: e.target.value } : b)
-                          }))}
-                        />
-                        <input
-                          className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                          placeholder="Phone"
-                          value={br.phone ?? ""}
-                          onChange={(e) => setForm((f) => ({
-                            ...f,
-                            branches: f.branches.map((b, idx) => idx === i ? { ...b, phone: e.target.value } : b)
-                          }))}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
       {/* Error state */}
       {error && (
@@ -748,6 +774,297 @@ export default function AdminAcademies({ session }) {
                     {saving ? t("adminAcademies.saving") : t("adminAcademies.save")}
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Academy Selection Modal for Branch Creation */}
+      {showAcademySelection && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setShowAcademySelection(false)}
+        >
+          <div
+            className="w-full max-w-4xl rounded-2xl bg-brand-800 text-white shadow-xl p-6 overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-xl font-bold mb-4 text-accent-500">Select Academy for New Branch</div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {list.map((academy) => (
+                <div
+                  key={academy._id}
+                  onClick={() => {
+                    setSelectedAcademyForBranch(academy)
+                    setShowAcademySelection(false)
+                    setAddingBranch(true)
+                  }}
+                  className="p-4 rounded-xl bg-brand-700/40 border border-brand-600 hover:bg-brand-700/60 cursor-pointer transition"
+                >
+                  <div className="flex items-center gap-3">
+                    {academy.logo && (
+                      <img
+                        src={academy.logo}
+                        alt={academy.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-white/10"
+                      />
+                    )}
+                    <div>
+                      <div className="font-semibold">{academy.name}</div>
+                      <div className="text-sm text-white/70">{academy.nameAr}</div>
+                      <div className="text-xs text-white/60">
+                        {academy.branches?.length || 0} branches
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowAcademySelection(false)}
+                className="px-4 py-2 rounded-xl border border-brand-600 text-white hover:bg-brand-700 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Branch Creation Modal */}
+      {addingBranch && selectedAcademyForBranch && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => {
+            setAddingBranch(false)
+            setSelectedAcademyForBranch(null)
+          }}
+        >
+          <div
+            className="w-full max-w-2xl rounded-2xl bg-brand-800 text-white shadow-xl p-6 overflow-y-auto max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-xl font-bold mb-4 text-accent-500">
+              Add Branch to {selectedAcademyForBranch.name}
+            </div>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name (English)*</label>
+                  <input
+                    value={branchForm.name ?? ""}
+                    onChange={(e) => setBranchForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Branch name"
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name (Arabic)</label>
+                  <input
+                    value={branchForm.nameAr ?? ""}
+                    onChange={(e) => setBranchForm((prev) => ({ ...prev, nameAr: e.target.value }))}
+                    placeholder="اسم الفرع"
+                    className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone</label>
+                <input
+                  value={branchForm.phone ?? ""}
+                  onChange={(e) => setBranchForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Phone number"
+                  className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Contact Email</label>
+                <input
+                  value={branchForm.contact ?? ""}
+                  onChange={(e) => setBranchForm((prev) => ({ ...prev, contact: e.target.value }))}
+                  placeholder="Contact Email"
+                  className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  placeholder="Branch description"
+                  value={branchForm.description ?? ""}
+                  onChange={(e) => setBranchForm((prev) => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Location Description</label>
+                <input
+                  value={branchForm.locationDescription ?? ""}
+                  onChange={(e) => setBranchForm((prev) => ({ ...prev, locationDescription: e.target.value }))}
+                  placeholder="Location Description"
+                  className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Location</label>
+                <div className="rounded-xl bg-brand-700 border border-brand-600 overflow-hidden">
+                  <LocationPicker
+                    onChange={(geo) => setBranchForm((prev) => ({ ...prev, locationGeo: geo }))}
+                  />
+                </div>
+                {branchForm.locationGeo && (
+                  <div className="mt-2 text-sm text-accent-500">
+                    Selected: {branchForm.locationGeo.lat.toFixed(6)}, {branchForm.locationGeo.lng.toFixed(6)}
+                  </div>
+                )}
+              </div>
+
+              {/* Rating stars */}
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Rating:</span>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setBranchForm((f) => ({ ...f, rating: i + 1 }))}
+                    className="text-2xl"
+                  >
+                    {i < (branchForm.rating || 0) ? "⭐" : "☆"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Multi-select dropdown for ages */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Available Ages</label>
+                <Select
+                  isMulti
+                  options={yearOptions}
+                  value={(branchForm.ages || []).map((y) => ({ value: y, label: y.toString() }))}
+                  onChange={(selected) =>
+                    setBranchForm((prev) => ({
+                      ...prev,
+                      ages: selected.map((s) => s.value),
+                    }))
+                  }
+                  className="text-black"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={!!branchForm.verified}
+                    onChange={(e) => setBranchForm((prev) => ({ ...prev, verified: e.target.checked }))}
+                    className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
+                  />
+                  <span>Verified</span>
+                </label>
+
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={!!branchForm.offersGirls}
+                    onChange={(e) => setBranchForm({ ...branchForm, offersGirls: e.target.checked })}
+                    className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
+                  />
+                  <span>Girls</span>
+                </label>
+
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={!!branchForm.offersBoys}
+                    onChange={(e) => setBranchForm({ ...branchForm, offersBoys: e.target.checked })}
+                    className="rounded bg-brand-700 border-brand-600 text-accent-500 focus:ring-accent-500"
+                  />
+                  <span>Boys</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Subscription price (EGP)</label>
+                <input
+                  type="number"
+                  value={branchForm.subscriptionPrice ?? 0}
+                  onChange={(e) =>
+                    setBranchForm({
+                      ...branchForm,
+                      subscriptionPrice: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                />
+              </div>
+
+              {/* Training times */}
+              <div>
+                <div className="font-semibold mb-2">Training times</div>
+                <button
+                  type="button"
+                  className="px-3 py-1 rounded-xl bg-brand-700 hover:bg-brand-600 text-white text-sm mb-2"
+                  onClick={() =>
+                    setBranchForm((f) => ({
+                      ...f,
+                      trainingTimes: [...(f.trainingTimes || []), { day: "", time: "" }],
+                    }))
+                  }
+                >
+                  Add time
+                </button>
+                {(branchForm.trainingTimes || []).map((trainingTime, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-2 mt-2">
+                    <input
+                      className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                      placeholder="Day"
+                      value={trainingTime.day ?? ""}
+                      onChange={(e) => {
+                        const arr = [...(branchForm.trainingTimes || [])]
+                        arr[i] = { ...arr[i], day: e.target.value }
+                        setBranchForm({ ...branchForm, trainingTimes: arr })
+                      }}
+                    />
+                    <input
+                      className="px-3 py-2 rounded-xl bg-brand-700 border border-brand-600 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                      placeholder="Time"
+                      value={trainingTime.time ?? ""}
+                      onChange={(e) => {
+                        const arr = [...(branchForm.trainingTimes || [])]
+                        arr[i] = { ...arr[i], time: e.target.value }
+                        setBranchForm({ ...branchForm, trainingTimes: arr })
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4">
+                <button
+                  onClick={() => {
+                    setAddingBranch(false)
+                    setSelectedAcademyForBranch(null)
+                  }}
+                  className="px-4 py-2 rounded-xl border border-brand-600 text-white hover:bg-brand-700 transition"
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createBranch}
+                  disabled={saving}
+                  className="px-4 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold hover:bg-accent-600 disabled:opacity-50 transition"
+                >
+                  {saving ? "Creating..." : "Create Branch"}
+                </button>
               </div>
             </div>
           </div>
