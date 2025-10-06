@@ -17,6 +17,8 @@ export default function AcademyDetails() {
   async function loadAcademy() {
     try {
       const data = await api(`/api/academies/${id}`)
+      console.log("Loaded academy data:", data)
+      console.log("Branches:", data?.branches)
       setAcademy(data || null)
     } catch (err) {
       console.error("Failed to load academy:", err)

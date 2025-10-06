@@ -209,13 +209,24 @@ router.post(
   requireRole("admin"),
   safeHandler(async (req, res) => {
     const b = req.body
+    console.log("Creating branch for academy:", req.params.id)
+    console.log("Branch data received:", b)
     const update = {
       name: b.name || "Branch",
+      nameAr: b.nameAr || "",
       isMain: !!b.isMain,
       locationDescription: b.locationDescription || "",
       locationGeo: safeJSONParse(b.locationGeo),
       phone: b.phone || "",
+      contact: b.contact || "",
+      description: b.description || "",
+      rating: Number(b.rating) || 4,
+      verified: !!b.verified,
+      offersGirls: !!b.offersGirls,
+      offersBoys: !!b.offersBoys,
+      subscriptionPrice: Number(b.subscriptionPrice) || 0,
       trainingTimes: safeJSONParse(b.trainingTimes) || [],
+      ages: safeJSONParse(b.ages) || [],
     }
     const academy = await Academy.findByIdAndUpdate(
       req.params.id,
@@ -231,6 +242,7 @@ router.post(
       })
       await academy.save()
     }
+    console.log("Academy after branch creation:", academy.branches)
     res.status(201).json({ success: true, data: academy })
   })
 )

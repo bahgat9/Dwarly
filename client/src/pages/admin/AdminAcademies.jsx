@@ -91,6 +91,8 @@ export default function AdminAcademies({ session }) {
     setError(null)
     try {
       const data = await api("/api/academies") // api() auto-unwraps {data:...}
+      console.log("Loaded academies data:", data)
+      console.log("First academy branches:", data?.[0]?.branches)
       setList(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error("Failed to load academies:", err)
@@ -283,6 +285,9 @@ export default function AdminAcademies({ session }) {
         headers: { "Content-Type": "application/json" },
       })
 
+      console.log("Branch creation response:", updated)
+      console.log("Updated academy branches:", updated?.branches)
+
       // Update local list
       setList((prev) => prev.map((a) => (a._id === updated._id ? updated : a)))
       
@@ -378,18 +383,41 @@ export default function AdminAcademies({ session }) {
                   )}
                 </div>
 
-                {/* Location & Phone */}
-                <div className="mt-3 text-sm opacity-90 flex flex-col gap-1">
-                  <div>
-                    📍 {a.locationDescription
-                      ? a.locationDescription
-                      : a.location && typeof a.location === "object"
-                        ? `${a.location.lat}, ${a.location.lng}`
-                        : a.location || "—"}
+                {/* Branch info */}
+                {Array.isArray(a.branches) && a.branches.length > 0 ? (
+                  <div className="mt-3 text-sm opacity-90 flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                        {a.branches.length} branches
+                      </span>
+                    </div>
+                    {(() => {
+                      const mainBranch = a.branches.find(b => b.isMain) || a.branches[0]
+                      return (
+                        <>
+                          <div>
+                            📍 {mainBranch?.locationDescription || 
+                              (mainBranch?.locationGeo ? `${mainBranch.locationGeo.lat}, ${mainBranch.locationGeo.lng}` : "—")}
+                          </div>
+                          <div>☎ {mainBranch?.phone || a.phone || "—"}</div>
+                          {mainBranch?.contact && <div>✉ {mainBranch.contact}</div>}
+                        </>
+                      )
+                    })()}
                   </div>
-                  <div>☎ {a.phone || "—"}</div>
-                  {a.contact && <div>✉ {a.contact}</div>}
-                </div>
+                ) : (
+                  <div className="mt-3 text-sm opacity-90 flex flex-col gap-1">
+                    <div>
+                      📍 {a.locationDescription
+                        ? a.locationDescription
+                        : a.location && typeof a.location === "object"
+                          ? `${a.location.lat}, ${a.location.lng}`
+                          : a.location || "—"}
+                    </div>
+                    <div>☎ {a.phone || "—"}</div>
+                    {a.contact && <div>✉ {a.contact}</div>}
+                  </div>
+                )}
 
                 {/* Rating + Price */}
                 <div className="mt-3 flex items-center justify-between">
