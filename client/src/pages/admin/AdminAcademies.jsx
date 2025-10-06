@@ -399,7 +399,7 @@ export default function AdminAcademies({ session }) {
                       return (
                         <>
                           <div className="font-medium text-accent-400">
-                            🏢 {mainBranch?.name || "Main Branch"}
+                            🏢 {mainBranch?.name || "Main Branch"} {mainBranch?.isMain ? "(Main)" : ""}
                           </div>
                           <div>
                             📍 {mainBranch?.locationDescription || 

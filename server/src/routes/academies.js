@@ -66,6 +66,17 @@ router.get(
   safeHandler(async (req, res) => {
     const academy = await Academy.findById(req.params.id)
     if (!academy) return res.status(404).json({ success: false, error: "Not found" })
+    
+    // Fix existing academies that have branches but no main branch
+    if (academy.branches && academy.branches.length > 0) {
+      const hasMainBranch = academy.branches.some(b => b.isMain)
+      if (!hasMainBranch) {
+        academy.branches[0].isMain = true
+        await academy.save()
+        console.log("Fixed academy", academy.name, "- set first branch as main")
+      }
+    }
+    
     console.log("Fetching academy:", academy.name, "Branches:", academy.branches?.length || 0)
     res.json({ success: true, data: academy })
   })
@@ -213,10 +224,14 @@ router.post(
     const b = req.body
     console.log("Creating branch for academy:", req.params.id)
     console.log("Branch data received:", b)
+    // Check if this will be the first branch
+    const existingAcademy = await Academy.findById(req.params.id)
+    const isFirstBranch = !existingAcademy?.branches || existingAcademy.branches.length === 0
+    
     const update = {
       name: b.name || "Branch",
       nameAr: b.nameAr || "",
-      isMain: !!b.isMain,
+      isMain: isFirstBranch || !!b.isMain, // First branch is always main
       locationDescription: b.locationDescription || "",
       locationGeo: safeJSONParse(b.locationGeo),
       phone: b.phone || "",
@@ -247,6 +262,13 @@ router.post(
     }
     console.log("Academy after branch creation:", academy.branches)
     console.log("Total branches now:", academy.branches?.length || 0)
+    
+    // If this was the first branch and it's not marked as main, fix it
+    if (academy.branches.length === 1 && !academy.branches[0].isMain) {
+      academy.branches[0].isMain = true
+      await academy.save()
+      console.log("Fixed first branch to be main")
+    }
     
     // Verify the branch was actually saved
     const verifyAcademy = await Academy.findById(req.params.id)

@@ -53,7 +53,12 @@ export default function AcademyDetails() {
     if (!academy || !Array.isArray(academy.branches)) return
     let idx = 0
     const mainIdx = academy.branches.findIndex((b) => b.isMain)
-    if (mainIdx >= 0) idx = mainIdx
+    if (mainIdx >= 0) {
+      idx = mainIdx
+    } else if (academy.branches.length > 0) {
+      // If no main branch is set, use the first branch
+      idx = 0
+    }
     setBranchIndex(idx)
   }, [academy])
 
