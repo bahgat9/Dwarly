@@ -133,19 +133,21 @@ export default function AcademyDetails() {
         </div>
       )}
 
-      {/* Branch slider */}
+      {/* Branch slider - Show even with one branch */}
       {Array.isArray(academy.branches) && academy.branches.length > 0 && (
         <div className="bg-white/10 rounded-2xl p-6 shadow">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Branches</h2>
             <div className="flex items-center gap-2">
-              {/* Desktop next button */}
-              <button
-                className="hidden md:inline-flex px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20"
-                onClick={() => setBranchIndex((i) => (i + 1) % academy.branches.length)}
-              >
-                Next ➜
-              </button>
+              {/* Desktop next button - only show if multiple branches */}
+              {academy.branches.length > 1 && (
+                <button
+                  className="hidden md:inline-flex px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20"
+                  onClick={() => setBranchIndex((i) => (i + 1) % academy.branches.length)}
+                >
+                  Next ➜
+                </button>
+              )}
             </div>
           </div>
           {/* Slide area */}
@@ -191,19 +193,86 @@ export default function AcademyDetails() {
               )}
             </div>
           </div>
-          {/* Dots */}
-          <div className="mt-3 flex items-center justify-center gap-2">
-            {academy.branches.map((branch, i) => (
-              <button
-                key={i}
-                className={`w-2.5 h-2.5 rounded-full ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`}
-                onClick={() => setBranchIndex(i)}
-                title={`${branch.name} ${branch.isMain ? '(Main)' : ''}`}
-              />
-            ))}
-          </div>
+          {/* Dots - only show if multiple branches */}
+          {academy.branches.length > 1 && (
+            <div className="mt-3 flex items-center justify-center gap-2">
+              {academy.branches.map((branch, i) => (
+                <button
+                  key={i}
+                  className={`w-2.5 h-2.5 rounded-full ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`}
+                  onClick={() => setBranchIndex(i)}
+                  title={`${branch.name} ${branch.isMain ? '(Main)' : ''}`}
+                />
+              ))}
+            </div>
+          )}
           <div className="mt-2 text-xs text-white/60 text-center">
-            Swipe horizontally on mobile to change branch • {branchIndex + 1} of {academy.branches.length}
+            {academy.branches.length > 1 ? (
+              <>Swipe horizontally on mobile to change branch • {branchIndex + 1} of {academy.branches.length}</>
+            ) : (
+              <>This academy has one branch location</>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* All Branches List - Show all branches */}
+      {Array.isArray(academy.branches) && academy.branches.length > 0 && (
+        <div className="bg-white/10 rounded-2xl p-6 shadow">
+          <h2 className="text-xl font-semibold mb-4">All Branch Locations</h2>
+          <div className="space-y-4">
+            {academy.branches.map((branch, i) => (
+              <div key={i} className={`p-4 rounded-xl border ${i === branchIndex ? 'border-accent-500 bg-accent-500/10' : 'border-white/20 bg-white/5'}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold">{branch.name}</h3>
+                      {branch.isMain && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
+                          Main Branch
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-white/80 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span>📍</span>
+                        <span>{branch.locationDescription || 
+                          (branch.locationGeo ? `${branch.locationGeo.lat}, ${branch.locationGeo.lng}` : "—")}</span>
+                      </div>
+                      {branch.phone && (
+                        <div className="flex items-center gap-2">
+                          <span>☎</span>
+                          <span>{branch.phone}</span>
+                        </div>
+                      )}
+                      {branch.contact && (
+                        <div className="flex items-center gap-2">
+                          <span>✉</span>
+                          <span>{branch.contact}</span>
+                        </div>
+                      )}
+                      {branch.description && (
+                        <div className="mt-2 text-sm text-white/70">
+                          {branch.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {academy.branches.length > 1 && (
+                    <button
+                      onClick={() => setBranchIndex(i)}
+                      className={`px-3 py-1 rounded-lg text-sm ${
+                        i === branchIndex 
+                          ? 'bg-accent-500 text-white' 
+                          : 'bg-white/10 text-white/70 hover:bg-white/20'
+                      }`}
+                    >
+                      {i === branchIndex ? 'Current' : 'View'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
