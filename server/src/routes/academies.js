@@ -32,6 +32,32 @@ function safeJSONParse(value) {
   }
 }
 
+// Build a combined branches array that includes a synthesized main branch
+function buildCombinedBranches(academyDoc) {
+  const a = academyDoc.toObject ? academyDoc.toObject() : academyDoc;
+  const mainBranch = {
+    name: a.name || "Main Branch",
+    nameAr: a.nameAr,
+    isMain: true,
+    locationDescription: a.locationDescription || "",
+    locationGeo: a.locationGeo || undefined,
+    phone: a.phone || "",
+    contact: a.contact || "",
+    description: a.description || "",
+    rating: typeof a.rating === "number" ? a.rating : 0,
+    verified: !!a.verified,
+    offersGirls: !!a.offersGirls,
+    offersBoys: !!a.offersBoys,
+    subscriptionPrice: typeof a.subscriptionPrice === "number" ? a.subscriptionPrice : 0,
+    trainingTimes: Array.isArray(a.trainingTimes) ? a.trainingTimes : [],
+    ages: Array.isArray(a.ages) ? a.ages : [],
+  };
+  const existing = Array.isArray(a.branches) ? a.branches : [];
+  // Ensure only the synthesized is main in combined view
+  const others = existing.map((b) => ({ ...(b.toObject?.() || b), isMain: false }));
+  return [mainBranch, ...others];
+}
+
 /* ------------------ Routes ------------------ */
 
 /**
@@ -50,9 +76,11 @@ router.get(
     ]);
 
     console.log("Fetched academies:", items.length, "First academy branches:", items[0]?.branches?.length || 0)
+    // Include synthesized main branch in list response for client preview
+    const data = items.map((it) => ({ ...(it.toObject?.() || it), branches: buildCombinedBranches(it) }))
     res.json({
       success: true,
-      data: items,
+      data,
       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
     });
   })
@@ -66,19 +94,10 @@ router.get(
   safeHandler(async (req, res) => {
     const academy = await Academy.findById(req.params.id)
     if (!academy) return res.status(404).json({ success: false, error: "Not found" })
-    
-    // Fix existing academies that have branches but no main branch
-    if (academy.branches && academy.branches.length > 0) {
-      const hasMainBranch = academy.branches.some(b => b.isMain)
-      if (!hasMainBranch) {
-        academy.branches[0].isMain = true
-        await academy.save()
-        console.log("Fixed academy", academy.name, "- set first branch as main")
-      }
-    }
-    
     console.log("Fetching academy:", academy.name, "Branches:", academy.branches?.length || 0)
-    res.json({ success: true, data: academy })
+    // Return combined branches (synthesized main + stored branches) for user detail view
+    const payload = { ...(academy.toObject?.() || academy), branches: buildCombinedBranches(academy) }
+    res.json({ success: true, data: payload })
   })
 )
 
