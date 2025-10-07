@@ -717,11 +717,18 @@ export default function Academies({ session, adminMode = false }) {
             {/* Map */}
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
-              <AcademyMap 
-                key={`map-${selected._id}-${branchIndex}-${selected.branches?.[branchIndex]?.locationGeo?.lat ?? ''}-${selected.branches?.[branchIndex]?.locationGeo?.lng ?? ''}-${selected.branches?.[branchIndex]?.locationDescription ?? ''}`}
-                query={selected.branches?.[branchIndex]?.locationGeo || selected.branches?.[branchIndex]?.locationDescription || getMapQuery(selected)} 
-                height={300} 
-              />
+              {(() => {
+                const branch = selected.branches?.[branchIndex]
+                const branchGeo = toLatLng(branch?.locationGeo) || toLatLng(branch?.location)
+                const mapKey = `map-${selected._id}-${branchIndex}-${branchGeo?.lat ?? ''}-${branchGeo?.lng ?? ''}-${branch?.locationDescription ?? ''}`
+                return (
+                  <AcademyMap
+                    key={mapKey}
+                    query={branchGeo || branch?.locationDescription || getMapQuery(selected)}
+                    height={300}
+                  />
+                )
+              })()}
             </div>
 
             {/* Training Times */}
