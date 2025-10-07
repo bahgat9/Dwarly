@@ -573,11 +573,22 @@ export default function Academies({ session, adminMode = false }) {
 
             {/* Branch slider */}
             {Array.isArray(selected.branches) && selected.branches.length > 0 && (
-              // Wrapper controls positioning (external buttons live here on desktop)
-              <div className="mb-6 relative">
-                {/* Inner card container (mobile swipe + internal arrows) */}
+              // Wrapper with side columns on desktop
+              <div className="mb-6 grid md:grid-cols-[auto_1fr_auto] grid-cols-1 items-stretch gap-3">
+                {/* Desktop left side button */}
+                {selected.branches.length > 1 && (
+                  <div className="hidden md:flex items-center justify-center">
+                    <button
+                      aria-label="Previous branch"
+                      onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
+                      className="w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40"
+                    >◀</button>
+                  </div>
+                )}
+
+                {/* Card container (mobile swipe) */}
                 <div
-                  className="rounded-xl border border-white/10 bg-brand-800/60 overflow-hidden relative min-h-[180px]"
+                  className="rounded-xl border border-white/10 bg-brand-800/60 overflow-hidden relative min-h-[200px]"
                   onTouchStart={(e) => { branchTouchStartXRef.current = e.changedTouches[0].clientX }}
                   onTouchEnd={(e) => {
                     const startX = branchTouchStartXRef.current
@@ -602,44 +613,41 @@ export default function Academies({ session, adminMode = false }) {
                     <div className="text-white/80 mb-2">☎ {selected.branches[branchIndex].phone}</div>
                   )}
                   </div>
-
+                  {/* Centered dots (both) */}
                   {selected.branches.length > 1 && (
-                    <>
-                      {/* Internal mobile-only arrows */}
-                      <button
-                        aria-label="Previous branch"
-                        onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
-                        className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-accent-500 text-brand-900 font-bold shadow ring-2 ring-white/40 z-50"
-                      >◀</button>
-                      <button
-                        aria-label="Next branch"
-                        onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
-                        className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-accent-500 text-brand-900 font-bold shadow ring-2 ring-white/40 z-50"
-                      >▶</button>
-                      {/* Centered dots */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 z-40">
-                        {selected.branches.map((_, i) => (
-                          <span key={i} onClick={() => setBranchIndex(i)} className={`w-3 h-3 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/40'}`} />
-                        ))}
-                      </div>
-                    </>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 z-10">
+                      {selected.branches.map((_, i) => (
+                        <span key={i} onClick={() => setBranchIndex(i)} className={`w-3 h-3 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/40'}`} />
+                      ))}
+                    </div>
                   )}
                 </div>
 
+                {/* Desktop right side button */}
                 {selected.branches.length > 1 && (
-                  <>
-                    {/* External desktop-only arrows placed outside the card */}
-                    <button
-                      aria-label="Previous branch"
-                      onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
-                      className="hidden md:flex items-center justify-center absolute -left-12 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40 z-40"
-                    >◀</button>
+                  <div className="hidden md:flex items-center justify-center">
                     <button
                       aria-label="Next branch"
                       onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
-                      className="hidden md:flex items-center justify-center absolute -right-12 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40 z-40"
+                      className="w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40"
                     >▶</button>
-                  </>
+                  </div>
+                )}
+
+                {/* Mobile bottom separated buttons (not overlaying text) */}
+                {selected.branches.length > 1 && (
+                  <div className="md:hidden flex justify-center gap-3 mt-2">
+                    <button
+                      aria-label="Previous branch"
+                      onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
+                      className="px-4 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold shadow"
+                    >Prev</button>
+                    <button
+                      aria-label="Next branch"
+                      onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
+                      className="px-4 py-2 rounded-xl bg-accent-500 text-brand-900 font-semibold shadow"
+                    >Next</button>
+                  </div>
                 )}
               </div>
             )}
@@ -710,8 +718,8 @@ export default function Academies({ session, adminMode = false }) {
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
               <AcademyMap 
-                key={`map-${selected._id}-${branchIndex}-${selected.branches?.[branchIndex]?.locationGeo?.lat ?? ''}-${selected.branches?.[branchIndex]?.locationGeo?.lng ?? ''}`}
-                query={selected.branches?.[branchIndex]?.locationGeo || getMapQuery(selected)} 
+                key={`map-${selected._id}-${branchIndex}-${selected.branches?.[branchIndex]?.locationGeo?.lat ?? ''}-${selected.branches?.[branchIndex]?.locationGeo?.lng ?? ''}-${selected.branches?.[branchIndex]?.locationDescription ?? ''}`}
+                query={selected.branches?.[branchIndex]?.locationGeo || selected.branches?.[branchIndex]?.locationDescription || getMapQuery(selected)} 
                 height={300} 
               />
             </div>
