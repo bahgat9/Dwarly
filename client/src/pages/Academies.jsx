@@ -107,6 +107,8 @@ export default function Academies({ session, adminMode = false }) {
     position: '',
     message: ''
   })
+  // Branch slider state for details modal
+  const [branchIndex, setBranchIndex] = useState(0)
 
   async function loadRequestStatus() {
     if (!selected || !session || session.role !== 'user') {
@@ -183,6 +185,13 @@ export default function Academies({ session, adminMode = false }) {
 
   // Load request status when selected changes
   useEffect(() => { loadRequestStatus() }, [selected])
+
+  // Reset/choose branch when a card is opened
+  useEffect(() => {
+    if (!selected || !Array.isArray(selected.branches)) return
+    const mainIdx = selected.branches.findIndex(b => b.isMain)
+    setBranchIndex(mainIdx >= 0 ? mainIdx : 0)
+  }, [selected])
 
   // Add academy
   async function add() {
@@ -561,6 +570,43 @@ export default function Academies({ session, adminMode = false }) {
               </div>
             </div>
 
+            {/* Branch slider */}
+            {Array.isArray(selected.branches) && selected.branches.length > 0 && (
+              <div className="mb-6 rounded-xl border border-white/10 bg-brand-800/60 overflow-hidden relative">
+                <div className="p-4">
+                  <div className="text-lg font-semibold mb-1">{selected.branches[branchIndex]?.name || `Branch ${branchIndex + 1}`}</div>
+                  <div className="text-white/80 mb-2">
+                    📍 {selected.branches[branchIndex]?.locationDescription ||
+                    (selected.branches[branchIndex]?.locationGeo
+                      ? `${selected.branches[branchIndex].locationGeo.lat}, ${selected.branches[branchIndex].locationGeo.lng}`
+                      : "—")}
+                  </div>
+                  {selected.branches[branchIndex]?.phone && (
+                    <div className="text-white/80 mb-2">☎ {selected.branches[branchIndex].phone}</div>
+                  )}
+                </div>
+                {selected.branches.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Previous branch"
+                      onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                    >◀</button>
+                    <button
+                      aria-label="Next branch"
+                      onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                    >▶</button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                      {selected.branches.map((_, i) => (
+                        <span key={i} onClick={() => setBranchIndex(i)} className={`w-2.5 h-2.5 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Info Grid */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               {/* Rating */}
@@ -601,16 +647,18 @@ export default function Academies({ session, adminMode = false }) {
                 </div>
               </div>
 
-              {/* Contact */}
+              {/* Contact - bind to current branch when available */}
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">{t("academies.contact")}</div>
                 <div className="flex items-center gap-2 text-sm opacity-90">
                   <span>📍</span>
-                  {selected.locationDescription || locationToText(selected.location) || "—"}
+                  {(selected.branches?.[branchIndex]?.locationDescription)
+                    || (selected.branches?.[branchIndex]?.locationGeo ? `${selected.branches[branchIndex].locationGeo.lat}, ${selected.branches[branchIndex].locationGeo.lng}` : null)
+                    || selected.locationDescription || locationToText(selected.location) || "—"}
                 </div>
                 <div className="flex items-center gap-2 text-sm opacity-90 mt-2">
                   <span>☎</span>
-                  {selected.phone || "—"}
+                  {selected.branches?.[branchIndex]?.phone || selected.phone || "—"}
                 </div>
                 {selected.email && (
                   <div className="flex items-center gap-2 text-sm opacity-90 mt-2">
@@ -624,15 +672,15 @@ export default function Academies({ session, adminMode = false }) {
             {/* Map */}
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
-              <AcademyMap query={getMapQuery(selected)} height={300} />
+              <AcademyMap query={selected.branches?.[branchIndex]?.locationGeo || getMapQuery(selected)} height={300} />
             </div>
 
             {/* Training Times */}
-            {selected?.trainingTimes?.length > 0 && (
+            {(selected.branches?.[branchIndex]?.trainingTimes?.length > 0 || selected?.trainingTimes?.length > 0) && (
               <div className="p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-3">{t("academies.trainingTimes")}</div>
                 <ul className="space-y-2">
-                  {(selected.trainingTimes || []).map((t, i) => (
+                  {(selected.branches?.[branchIndex]?.trainingTimes || selected.trainingTimes || []).map((t, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm opacity-90">
                       <span>⏰</span>
                       {typeof t === "string" ? t : `${t.day}: ${t.time}`}
