@@ -26,8 +26,27 @@ export default function AcademyMap({ query, height = 300 }) {
     );
   }
 
-  // Fallback for older records that still have plain text
+  // If query is a "lat, lng" string → parse and show map
   if (typeof query === "string" && query.trim()) {
+    const m = query.match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    if (m) {
+      const lat = parseFloat(m[1]);
+      const lng = parseFloat(m[2]);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        return (
+          <div style={{ height }}>
+            <MapContainer center={[lat, lng]} zoom={14} style={{ height: "100%", width: "100%" }}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <Marker position={[lat, lng]} />
+            </MapContainer>
+          </div>
+        );
+      }
+    }
+    // Otherwise render as text description
     return <div className="text-white/80 text-sm">📍 {query}</div>;
   }
 
