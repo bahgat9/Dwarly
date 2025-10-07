@@ -139,14 +139,21 @@ export default function AcademyDetails() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Branches</h2>
             <div className="flex items-center gap-2">
-              {/* Desktop next button - only show if multiple branches */}
               {academy.branches.length > 1 && (
-                <button
-                  className="hidden md:inline-flex px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20"
-                  onClick={() => setBranchIndex((i) => (i + 1) % academy.branches.length)}
-                >
-                  Next ➜
-                </button>
+                <>
+                  <button
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20"
+                    onClick={() => setBranchIndex((i) => (i - 1 + academy.branches.length) % academy.branches.length)}
+                  >
+                    ◀ Prev
+                  </button>
+                  <button
+                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20"
+                    onClick={() => setBranchIndex((i) => (i + 1) % academy.branches.length)}
+                  >
+                    Next ▶
+                  </button>
+                </>
               )}
             </div>
           </div>
