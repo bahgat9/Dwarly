@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react'
 import { MapPin, Phone, Plus, Star, Trash, Clock, RefreshCw } from 'lucide-react'
 import AcademyMap from '../components/AcademyMap.jsx'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import LocationPicker from '../components/LocationPicker.jsx'
 import { api } from '../api'
 import JoinRequestModal from '../components/JoinRequestModal.jsx'
@@ -714,17 +716,27 @@ export default function Academies({ session, adminMode = false }) {
               </div>
             </div>
 
-            {/* Map */}
+            {/* Map (force leaflet map when branch has coords) */}
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
               {(() => {
                 const branch = selected.branches?.[branchIndex]
                 const branchGeo = toLatLng(branch?.locationGeo) || toLatLng(branch?.location)
                 const mapKey = `map-${selected._id}-${branchIndex}-${branchGeo?.lat ?? ''}-${branchGeo?.lng ?? ''}-${branch?.locationDescription ?? ''}`
+                if (branchGeo) {
+                  return (
+                    <div key={mapKey} style={{ height: 300 }}>
+                      <MapContainer center={[branchGeo.lat, branchGeo.lng]} zoom={14} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+                        <Marker position={[branchGeo.lat, branchGeo.lng]} />
+                      </MapContainer>
+                    </div>
+                  )
+                }
                 return (
                   <AcademyMap
                     key={mapKey}
-                    query={branchGeo || branch?.locationDescription || getMapQuery(selected)}
+                    query={branch?.locationDescription || getMapQuery(selected)}
                     height={300}
                   />
                 )
