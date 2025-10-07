@@ -113,6 +113,17 @@ export default function AcademyDetails() {
                 academy.location || academy.locationDescription || "—"
               )}
             </div>
+            {/* Current branch quick info */}
+            {Array.isArray(academy.branches) && academy.branches.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/80">
+                {academy.branches[branchIndex]?.phone && (
+                  <span className="px-2 py-1 rounded-lg bg-white/10 border border-white/10">☎ {academy.branches[branchIndex].phone}</span>
+                )}
+                {academy.branches[branchIndex]?.contact && (
+                  <span className="px-2 py-1 rounded-lg bg-white/10 border border-white/10">✉ {academy.branches[branchIndex].contact}</span>
+                )}
+              </div>
+            )}
           </div>
           {academy.logo && (
             <img src={academy.logo} alt={academy.name} className="w-20 h-20 rounded-xl object-cover border border-white/10" />
@@ -199,6 +210,37 @@ export default function AcademyDetails() {
                 </div>
               )}
             </div>
+
+            {/* Overlay arrows */}
+            {academy.branches.length > 1 && (
+              <>
+                <button
+                  aria-label="Previous branch"
+                  onClick={() => setBranchIndex((i) => (i - 1 + academy.branches.length) % academy.branches.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 shadow"
+                >
+                  ◀
+                </button>
+                <button
+                  aria-label="Next branch"
+                  onClick={() => setBranchIndex((i) => (i + 1) % academy.branches.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20 shadow"
+                >
+                  ▶
+                </button>
+
+                {/* Centered dots */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                  {academy.branches.map((_, i) => (
+                    <span
+                      key={i}
+                      onClick={() => setBranchIndex(i)}
+                      className={`w-2.5 h-2.5 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           {/* Dots - only show if multiple branches */}
           {academy.branches.length > 1 && (
