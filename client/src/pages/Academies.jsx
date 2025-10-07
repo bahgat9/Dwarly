@@ -577,7 +577,7 @@ export default function Academies({ session, adminMode = false }) {
               <div className="mb-6 relative">
                 {/* Inner card container (mobile swipe + internal arrows) */}
                 <div
-                  className="rounded-xl border border-white/10 bg-brand-800/60 overflow-hidden relative min-h-[160px]"
+                  className="rounded-xl border border-white/10 bg-brand-800/60 overflow-hidden relative min-h-[180px]"
                   onTouchStart={(e) => { branchTouchStartXRef.current = e.changedTouches[0].clientX }}
                   onTouchEnd={(e) => {
                     const startX = branchTouchStartXRef.current
@@ -591,7 +591,7 @@ export default function Academies({ session, adminMode = false }) {
                   }}
                 >
                   <div className="p-4">
-                  <div className="text-lg font-semibold mb-1">{selected.branches[branchIndex]?.name || `Branch ${branchIndex + 1}`}</div>
+                    <div className="text-lg font-semibold mb-1">{selected.branches[branchIndex]?.name || `Branch ${branchIndex + 1}`}</div>
                   <div className="text-white/80 mb-2">
                     📍 {selected.branches[branchIndex]?.locationDescription ||
                     (selected.branches[branchIndex]?.locationGeo
@@ -609,17 +609,17 @@ export default function Academies({ session, adminMode = false }) {
                       <button
                         aria-label="Previous branch"
                         onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
-                        className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                        className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-accent-500 text-brand-900 font-bold shadow ring-2 ring-white/40 z-50"
                       >◀</button>
                       <button
                         aria-label="Next branch"
                         onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
-                        className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                        className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-accent-500 text-brand-900 font-bold shadow ring-2 ring-white/40 z-50"
                       >▶</button>
                       {/* Centered dots */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2 z-40">
                         {selected.branches.map((_, i) => (
-                          <span key={i} onClick={() => setBranchIndex(i)} className={`w-2.5 h-2.5 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`} />
+                          <span key={i} onClick={() => setBranchIndex(i)} className={`w-3 h-3 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/40'}`} />
                         ))}
                       </div>
                     </>
@@ -632,12 +632,12 @@ export default function Academies({ session, adminMode = false }) {
                     <button
                       aria-label="Previous branch"
                       onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
-                      className="hidden md:flex items-center justify-center absolute -left-12 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-accent-500 text-brand-900 font-bold shadow"
+                      className="hidden md:flex items-center justify-center absolute -left-12 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40 z-40"
                     >◀</button>
                     <button
                       aria-label="Next branch"
                       onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
-                      className="hidden md:flex items-center justify-center absolute -right-12 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-accent-500 text-brand-900 font-bold shadow"
+                      className="hidden md:flex items-center justify-center absolute -right-12 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-accent-500 text-brand-900 font-extrabold shadow ring-2 ring-white/40 z-40"
                     >▶</button>
                   </>
                 )}
@@ -709,7 +709,11 @@ export default function Academies({ session, adminMode = false }) {
             {/* Map */}
             <div className="mb-6 p-4 rounded-xl bg-brand-800/60 border border-white/10">
                 <div className="font-semibold mb-2">📍 {t("academies.location")}</div>
-              <AcademyMap query={selected.branches?.[branchIndex]?.locationGeo || getMapQuery(selected)} height={300} />
+              <AcademyMap 
+                key={`map-${selected._id}-${branchIndex}-${selected.branches?.[branchIndex]?.locationGeo?.lat ?? ''}-${selected.branches?.[branchIndex]?.locationGeo?.lng ?? ''}`}
+                query={selected.branches?.[branchIndex]?.locationGeo || getMapQuery(selected)} 
+                height={300} 
+              />
             </div>
 
             {/* Training Times */}
