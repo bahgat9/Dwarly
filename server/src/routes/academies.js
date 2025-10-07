@@ -52,9 +52,16 @@ function buildCombinedBranches(academyDoc) {
     trainingTimes: Array.isArray(a.trainingTimes) ? a.trainingTimes : [],
     ages: Array.isArray(a.ages) ? a.ages : [],
   };
-  const existing = Array.isArray(a.branches) ? a.branches : [];
-  // Ensure only the synthesized is main in combined view
-  const others = existing.map((b) => ({ ...(b.toObject?.() || b), isMain: false }));
+  const existing = Array.isArray(a.branches) ? a.branches.map(b => (b.toObject?.() || b)) : [];
+  if (existing.length === 0) {
+    return [mainBranch];
+  }
+  // If an existing branch is already marked main, use existing as-is
+  if (existing.some(b => b.isMain)) {
+    return existing;
+  }
+  // Otherwise prepend synthesized main and mark others as non-main
+  const others = existing.map((b) => ({ ...b, isMain: false }));
   return [mainBranch, ...others];
 }
 

@@ -587,16 +587,18 @@ export default function Academies({ session, adminMode = false }) {
                 </div>
                 {selected.branches.length > 1 && (
                   <>
+                    {/* Side external nav buttons */}
                     <button
                       aria-label="Previous branch"
                       onClick={() => setBranchIndex(i => (i - 1 + selected.branches.length) % selected.branches.length)}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                      className="absolute -left-12 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-accent-500 text-brand-900 font-bold shadow"
                     >◀</button>
                     <button
                       aria-label="Next branch"
                       onClick={() => setBranchIndex(i => (i + 1) % selected.branches.length)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/60 border border-white/20"
+                      className="absolute -right-12 top-1/2 -translate-y-1/2 px-3 py-2 rounded-full bg-accent-500 text-brand-900 font-bold shadow"
                     >▶</button>
+                    {/* Centered dots */}
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
                       {selected.branches.map((_, i) => (
                         <span key={i} onClick={() => setBranchIndex(i)} className={`w-2.5 h-2.5 rounded-full cursor-pointer ${i === branchIndex ? 'bg-accent-500' : 'bg-white/30'}`} />
