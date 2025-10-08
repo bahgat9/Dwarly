@@ -82,7 +82,10 @@ router.get(
 
     console.log("PlayerRequests /academy/:academyId endpoint - Found requests:", total);
 
-    res.json({ items, page, pages, total });
+    res.json({ 
+      success: true,
+      data: { items, page, pages, total }
+    });
   }
 );
 
