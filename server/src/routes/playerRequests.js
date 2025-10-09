@@ -2,6 +2,7 @@
 import express from "express";
 import PlayerRequest from "../models/PlayerRequest.js";
 import Academy from "../models/Academy.js";
+import User from "../models/User.js";
 import { auth, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -294,14 +295,21 @@ router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
   res.json({ success: true, message: "Player request deleted" });
 });
 
-// Debug route to check database state
+// Debug route to check database state (no auth required)
 router.get("/debug", async (req, res) => {
   try {
-    const academies = await Academy.find({}).limit(3);
-    const users = await User.find({ role: "academy" }).limit(3);
-    const requests = await PlayerRequest.find({}).limit(3);
+    console.log("=== DEBUG ROUTE CALLED ===");
     
-    res.json({
+    const academies = await Academy.find({}).limit(3);
+    console.log("Found academies:", academies.length);
+    
+    const users = await User.find({ role: "academy" }).limit(3);
+    console.log("Found academy users:", users.length);
+    
+    const requests = await PlayerRequest.find({}).limit(3);
+    console.log("Found player requests:", requests.length);
+    
+    const result = {
       academies: academies.map(a => ({
         id: a._id,
         name: a.name,
@@ -320,9 +328,13 @@ router.get("/debug", async (req, res) => {
         academy: r.academy,
         status: r.status
       }))
-    });
+    };
+    
+    console.log("Debug result:", JSON.stringify(result, null, 2));
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Debug route error:", error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 

@@ -2,6 +2,7 @@
 import express from "express";
 import Match from "../models/Match.js";
 import Academy from "../models/Academy.js";
+import User from "../models/User.js";
 import { auth, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -284,5 +285,37 @@ router.patch("/:id/status", auth(), requireRole("academy"), async (req, res) => 
   res.json(match);
 });
 
+
+// Debug route to check database state
+router.get("/debug", async (req, res) => {
+  try {
+    const academies = await Academy.find({}).limit(3);
+    const users = await User.find({ role: "academy" }).limit(3);
+    const matches = await Match.find({}).limit(3);
+    
+    res.json({
+      academies: academies.map(a => ({
+        id: a._id,
+        name: a.name,
+        branches: a.branches?.length || 0
+      })),
+      academyUsers: users.map(u => ({
+        id: u._id,
+        name: u.name,
+        role: u.role,
+        academyId: u.academyId,
+        academyName: u.academyName
+      })),
+      matches: matches.map(m => ({
+        id: m._id,
+        academy: m.academy,
+        status: m.status,
+        dateTime: m.dateTime
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;
