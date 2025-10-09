@@ -12,9 +12,12 @@ export default function AcademyRequests({ session }) {
 
   // Debug logging
   useEffect(() => {
-    console.log("AcademyRequests - Session:", session)
-    console.log("AcademyRequests - AcademyId:", session?.academyId)
-    console.log("AcademyRequests - Role:", session?.role)
+    console.log("=== ACADEMY REQUESTS DEBUG ===");
+    console.log("Full Session Object:", JSON.stringify(session, null, 2));
+    console.log("Session AcademyId:", session?.academyId);
+    console.log("Session AcademyId Type:", typeof session?.academyId);
+    console.log("Session Role:", session?.role);
+    console.log("=== END ACADEMY REQUESTS DEBUG ===");
   }, [session])
 
   // Check if session has academyId

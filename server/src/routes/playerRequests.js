@@ -76,8 +76,12 @@ router.get(
         console.log("EMERGENCY: User has no academyId, trying to find academy...");
         const fallbackAcademy = await Academy.findOne({});
         if (fallbackAcademy) {
-          console.log("Using fallback academy:", fallbackAcademy._id, fallbackAcademy.name);
-          console.log("Academy branches:", fallbackAcademy.branches?.length || 0);
+        console.log("=== ACADEMY DEBUG ===");
+        console.log("Fallback Academy ID:", fallbackAcademy._id);
+        console.log("Fallback Academy Name:", fallbackAcademy.name);
+        console.log("Academy Branches Count:", fallbackAcademy.branches?.length || 0);
+        console.log("Full Academy Object:", JSON.stringify(fallbackAcademy, null, 2));
+        console.log("=== END ACADEMY DEBUG ===");
           // Update user with academyId
           await User.findByIdAndUpdate(req.user.id, { 
             academyId: fallbackAcademy._id, 
@@ -288,6 +292,38 @@ router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
   if (!deleted) return res.status(404).json({ error: "Request not found" });
 
   res.json({ success: true, message: "Player request deleted" });
+});
+
+// Debug route to check database state
+router.get("/debug", async (req, res) => {
+  try {
+    const academies = await Academy.find({}).limit(3);
+    const users = await User.find({ role: "academy" }).limit(3);
+    const requests = await PlayerRequest.find({}).limit(3);
+    
+    res.json({
+      academies: academies.map(a => ({
+        id: a._id,
+        name: a.name,
+        branches: a.branches?.length || 0
+      })),
+      academyUsers: users.map(u => ({
+        id: u._id,
+        name: u.name,
+        role: u.role,
+        academyId: u.academyId,
+        academyName: u.academyName
+      })),
+      requests: requests.map(r => ({
+        id: r._id,
+        user: r.user,
+        academy: r.academy,
+        status: r.status
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Debug route to catch unmatched requests

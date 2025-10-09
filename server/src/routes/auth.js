@@ -250,9 +250,14 @@ router.get("/session", auth(false), async (req, res) => {
       academyName: user.academyName,
     };
     
-    console.log("Session endpoint - User data:", userData);
-    console.log("Session endpoint - User academyId type:", typeof user.academyId);
-    console.log("Session endpoint - User academyId value:", user.academyId);
+    console.log("=== SESSION DEBUG ===");
+    console.log("User ID:", user._id);
+    console.log("User Role:", user.role);
+    console.log("User AcademyId:", user.academyId);
+    console.log("User AcademyId Type:", typeof user.academyId);
+    console.log("User AcademyName:", user.academyName);
+    console.log("Full User Object:", JSON.stringify(user, null, 2));
+    console.log("=== END SESSION DEBUG ===");
     
     res.json({
       user: userData,
