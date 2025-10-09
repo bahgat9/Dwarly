@@ -172,7 +172,14 @@ router.get("/session", auth(false), async (req, res) => {
       console.log("EMERGENCY FIX: Processing academy user:", user.name, user.email);
       console.log("Current academyId:", user.academyId);
       
-      if (!user.academyId) {
+      // Check if user's academyId points to a valid academy
+      let validAcademy = null;
+      if (user.academyId) {
+        validAcademy = await Academy.findById(user.academyId);
+        console.log("User's current academyId valid:", !!validAcademy);
+      }
+      
+      if (!user.academyId || !validAcademy) {
         console.log("No academyId found, attempting to link...");
         
         // Try multiple strategies to find or create academy
@@ -204,16 +211,22 @@ router.get("/session", auth(false), async (req, res) => {
           console.log("Strategy 2 - Found by name:", linked?.name);
         }
         
-        // Strategy 3: Try to find any academy (fallback)
+        // Strategy 3: Try to find the main TUT Academy (hardcoded fix)
         if (!linked) {
-          linked = await Academy.findOne({});
-          console.log("Strategy 3 - Using fallback academy:", linked?.name);
+          linked = await Academy.findById("68e516e052e0f422eb4016ba");
+          console.log("Strategy 3 - Using TUT Academy:", linked?.name);
         }
         
-        // Strategy 4: Create new academy if nothing found
+        // Strategy 4: Try to find any academy (fallback)
+        if (!linked) {
+          linked = await Academy.findOne({});
+          console.log("Strategy 4 - Using any academy:", linked?.name);
+        }
+        
+        // Strategy 5: Create new academy if nothing found
         if (!linked) {
           const academyName = user.academyName || user.name || "Academy " + user.name;
-          console.log("Strategy 4 - Creating new academy:", academyName);
+          console.log("Strategy 5 - Creating new academy:", academyName);
           linked = await Academy.create({ 
             name: academyName, 
             verified: false,

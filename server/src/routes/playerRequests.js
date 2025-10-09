@@ -295,6 +295,46 @@ router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
   res.json({ success: true, message: "Player request deleted" });
 });
 
+// One-time fix route to fix academy linking
+router.get("/fix-academy-linking", async (req, res) => {
+  try {
+    console.log("=== FIXING ACADEMY LINKING ===");
+    
+    // Find the main TUT Academy
+    const tutAcademy = await Academy.findById("68e516e052e0f422eb4016ba");
+    if (!tutAcademy) {
+      return res.status(500).json({ error: "TUT Academy not found" });
+    }
+    
+    console.log("Found TUT Academy:", tutAcademy.name);
+    
+    // Update all academy users to point to TUT Academy
+    const result = await User.updateMany(
+      { role: "academy" },
+      { 
+        $set: { 
+          academyId: tutAcademy._id, 
+          academyName: tutAcademy.name 
+        } 
+      }
+    );
+    
+    console.log("Updated users:", result.modifiedCount);
+    
+    res.json({
+      success: true,
+      message: `Fixed ${result.modifiedCount} academy users`,
+      academy: {
+        id: tutAcademy._id,
+        name: tutAcademy.name
+      }
+    });
+  } catch (error) {
+    console.error("Fix error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Debug route to check database state (no auth required)
 router.get("/debug", async (req, res) => {
   try {
