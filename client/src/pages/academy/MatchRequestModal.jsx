@@ -39,6 +39,8 @@ export default function MatchRequestModal({ session, onClose, onCreated }) {
     setLoading(true);
     setError(null);
     try {
+      console.log("MatchRequestModal - Form data:", form);
+      
       const payload = {
         dateTime: `${form.date}T${form.time}:00Z`,
         ageGroup: Array.isArray(form.ageGroup) ? form.ageGroup.join(", ") : form.ageGroup,
@@ -49,13 +51,15 @@ export default function MatchRequestModal({ session, onClose, onCreated }) {
           lng: parseFloat(form.location.lng),
         },
         homeAway: "home", // Default to home match
-        phone: "", // Add default phone
-        duration: "2", // Add default duration
-        status: "requested",
+        phone: form.phone || "", // Use form phone or empty string
+        duration: form.duration || "2", // Use form duration or default
       };
+      
+      console.log("MatchRequestModal - Sending payload:", payload);
+      
       await api("/api/matches", {
         method: "POST",
-        body: payload,
+        body: JSON.stringify(payload),
       });
       onCreated();
       onClose();

@@ -130,14 +130,11 @@ fetchRequests: async () => {
   
   createRequest: async (newReq) => {
     try {
+      console.log("Creating match request with data:", newReq);
+      
       const matchData = {
-        academy: {
-          _id: newReq.academy._id,
-          name: newReq.academy.name,
-          logo: newReq.academy.logo
-        },
         ageGroup: newReq.ageGroup,
-        date: newReq.date,
+        dateTime: newReq.date, // Backend expects dateTime, not date
         locationDescription: newReq.location.address,
         locationGeo: {
           lat: parseFloat(newReq.location.lat),
@@ -148,6 +145,8 @@ fetchRequests: async () => {
         duration: newReq.duration,
         description: newReq.description || "Friendly match"
       };
+      
+      console.log("Sending match data to backend:", matchData);
       
       const createdMatch = await api("/api/matches", {
         method: "POST",

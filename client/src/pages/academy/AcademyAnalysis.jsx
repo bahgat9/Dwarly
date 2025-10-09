@@ -18,12 +18,22 @@ export default function AcademyAnalysis({ session }) {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log("AcademyAnalysis - Session:", session);
+      console.log("AcademyAnalysis - AcademyId:", session?.academyId);
+      
       if (!session?.academyId) {
         throw new Error("Academy not linked to your account.");
       }
+      
+      console.log("Loading analytics for academy:", session.academyId);
       const analytics = await api(`/api/academies/${session.academyId}/analytics`);
+      console.log("Analytics response:", analytics);
       setData(analytics);
+      
+      console.log("Loading finance for academy:", session.academyId);
       const fin = await api(`/api/academies/${session.academyId}/finance`);
+      console.log("Finance response:", fin);
       setFinanceList(fin);
     } catch (e) {
       console.error("Failed to load analytics/finance", e);

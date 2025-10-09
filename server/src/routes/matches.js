@@ -24,6 +24,7 @@ router.get("/", async (_req, res) => {
 router.post("/", auth(), requireRole("academy"), async (req, res) => {
   console.log("POST /api/matches - Request body:", req.body);
   console.log("POST /api/matches - User:", req.user);
+  console.log("POST /api/matches - User academyId:", req.user.academyId);
   
   const { ageGroup, dateTime, locationDescription, locationGeo, homeAway, phone, duration, description } = req.body;
 

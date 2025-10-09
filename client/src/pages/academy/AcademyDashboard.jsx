@@ -135,24 +135,35 @@ export default function AcademyDashboard({ session }) {
 
   async function loadData() {
     try {
+      // Debug session data
+      console.log("AcademyDashboard - Session:", session)
+      console.log("AcademyDashboard - AcademyId:", session?.academyId)
+      console.log("AcademyDashboard - Role:", session?.role)
+      
       // Check if academyId exists
       if (!session?.academyId) {
         console.error("No academyId found in session:", session)
-        setError(t("academy.academyInfoMissing"))
+        setError("Academy ID not found in session. Please contact support.")
         setLoading(false)
         return
       }
 
       // Load player requests - the API returns { items, page, pages, total }
+      console.log("Loading player requests for academy:", session.academyId)
       const requestsResponse = await api(`/api/playerRequests/academy/${session.academyId}`)
+      console.log("Player requests response:", requestsResponse)
       const requests = requestsResponse?.items || []
 
       // Load matches - the API returns an array directly
+      console.log("Loading matches for academy")
       const matches = await api("/api/matches/my")
+      console.log("Matches response:", matches)
 
       // Load analytics - the API returns { success: true, data: {...} }
       // but the api() function auto-unwraps it, so analyticsResponse is already the data
+      console.log("Loading analytics for academy:", session.academyId)
       const analytics = await api(`/api/academies/${session.academyId}/analytics`)
+      console.log("Analytics response:", analytics)
 
       setRequests(Array.isArray(requests) ? requests : [])
       setMatches(Array.isArray(matches) ? matches : [])

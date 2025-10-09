@@ -15,6 +15,8 @@ router.get("/", auth(), requireRole("academy"), async (req, res) => {
     const academyId = req.params.academyId;
     console.log("Analytics API called for academyId:", academyId);
     console.log("User making request:", req.user);
+    console.log("User academyId:", req.user.academyId);
+    console.log("Requested academyId:", academyId);
     
     const academyObjectId = new mongoose.Types.ObjectId(academyId);
 
