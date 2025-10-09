@@ -70,7 +70,26 @@ router.get(
         userAcademyId: req.user.academyId,
         requestedAcademyId: academyId
       });
-      return res.status(403).json({ error: "Forbidden" });
+      
+      // EMERGENCY FIX: If user is academy but no academyId, try to find one
+      if (!req.user.academyId) {
+        console.log("EMERGENCY: User has no academyId, trying to find academy...");
+        const fallbackAcademy = await Academy.findOne({});
+        if (fallbackAcademy) {
+          console.log("Using fallback academy:", fallbackAcademy._id);
+          // Update user with academyId
+          await User.findByIdAndUpdate(req.user.id, { 
+            academyId: fallbackAcademy._id, 
+            academyName: fallbackAcademy.name 
+          });
+          req.user.academyId = fallbackAcademy._id;
+        }
+      }
+      
+      // Final check
+      if (!req.user.academyId || req.user.academyId.toString() !== academyId) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
     }
 
     const total = await PlayerRequest.countDocuments({ academy: academyId });

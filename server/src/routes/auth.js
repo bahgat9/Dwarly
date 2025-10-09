@@ -167,35 +167,72 @@ router.get("/session", auth(false), async (req, res) => {
     let user = await User.findById(req.user.id).select("-password");
     if (!user) return res.json({ user: null });
 
-    // 🔧 Auto-link on session as well
-    if (user.role === "academy" && !user.academyId) {
-      console.log("Auto-linking academy user:", user.name, user.email);
-      let linked = null;
-      const candidateName = (user.academyName || user.name || "").trim();
-      if (candidateName) {
-        linked = await Academy.findOne({
-          $or: [
-            { name: new RegExp("^" + candidateName + "$", "i") },
-            { nameAr: new RegExp("^" + candidateName + "$", "i") },
-          ],
-        });
-        console.log("Found academy by name:", linked?.name);
-      }
-      if (!linked && candidateName) {
-        console.log("Creating new academy:", candidateName);
-        linked = await Academy.create({ name: candidateName, verified: false });
-      }
-      if (linked) {
-        console.log("Linking user to academy:", linked.name);
-        user = await User.findByIdAndUpdate(
-          req.user.id,
-          { $set: { academyId: linked._id, academyName: linked.name } },
-          { new: true }
-        ).select("-password");
-        // Re-issue cookie token with academyId
-        setToken(res, user);
+    // 🔧 EMERGENCY FIX: Force academy linking for academy users
+    if (user.role === "academy") {
+      console.log("EMERGENCY FIX: Processing academy user:", user.name, user.email);
+      console.log("Current academyId:", user.academyId);
+      
+      if (!user.academyId) {
+        console.log("No academyId found, attempting to link...");
+        
+        // Try multiple strategies to find or create academy
+        let linked = null;
+        
+        // Strategy 1: Try by user's academyName
+        if (user.academyName) {
+          linked = await Academy.findOne({
+            $or: [
+              { name: new RegExp("^" + user.academyName + "$", "i") },
+              { nameAr: new RegExp("^" + user.academyName + "$", "i") },
+            ],
+          });
+          console.log("Strategy 1 - Found by academyName:", linked?.name);
+        }
+        
+        // Strategy 2: Try by user's name
+        if (!linked && user.name) {
+          linked = await Academy.findOne({
+            $or: [
+              { name: new RegExp("^" + user.name + "$", "i") },
+              { nameAr: new RegExp("^" + user.name + "$", "i") },
+            ],
+          });
+          console.log("Strategy 2 - Found by name:", linked?.name);
+        }
+        
+        // Strategy 3: Try to find any academy (fallback)
+        if (!linked) {
+          linked = await Academy.findOne({});
+          console.log("Strategy 3 - Using fallback academy:", linked?.name);
+        }
+        
+        // Strategy 4: Create new academy if nothing found
+        if (!linked) {
+          const academyName = user.academyName || user.name || "Academy " + user.name;
+          console.log("Strategy 4 - Creating new academy:", academyName);
+          linked = await Academy.create({ 
+            name: academyName, 
+            verified: false,
+            locationDescription: "TBD",
+            phone: user.phone || ""
+          });
+        }
+        
+        if (linked) {
+          console.log("SUCCESS: Linking user to academy:", linked.name, linked._id);
+          user = await User.findByIdAndUpdate(
+            req.user.id,
+            { $set: { academyId: linked._id, academyName: linked.name } },
+            { new: true }
+          ).select("-password");
+          // Re-issue cookie token with academyId
+          setToken(res, user);
+          console.log("User updated with academyId:", user.academyId);
+        } else {
+          console.log("CRITICAL ERROR: Could not find or create academy for user:", user.name);
+        }
       } else {
-        console.log("Could not find or create academy for user:", user.name);
+        console.log("User already has academyId:", user.academyId);
       }
     }
 

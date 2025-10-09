@@ -23,7 +23,7 @@ export default function AcademyRequests({ session }) {
       <div className="max-w-5xl mx-auto py-10 space-y-6">
         <h1 className="text-2xl font-bold">📥 {t("academyRequests.title")}</h1>
         <div className="text-red-500">
-          Error: Academy ID not found in session. Please contact support.
+          Error: Academy ID not found in session. Please refresh the page or contact support.
         </div>
         <div className="text-sm text-white/70">
           Session data: {JSON.stringify(session, null, 2)}
@@ -31,6 +31,12 @@ export default function AcademyRequests({ session }) {
         <div className="text-sm text-white/70">
           This usually means your account is not properly linked to an academy.
         </div>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Refresh Page
+        </button>
       </div>
     )
   }
