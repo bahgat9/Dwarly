@@ -21,6 +21,15 @@ export default function AcademyRequests({ session }) {
     dependencies: [page]
   })
 
+  // Debug logging
+  useEffect(() => {
+    console.log("AcademyRequests - Session:", session)
+    console.log("AcademyRequests - AcademyId:", session?.academyId)
+    console.log("AcademyRequests - RequestsData:", requestsData)
+    console.log("AcademyRequests - Loading:", requestsLoading)
+    console.log("AcademyRequests - Error:", requestsError)
+  }, [session, requestsData, requestsLoading, requestsError])
+
   const requests = requestsData?.items || []
 
   // Update pages when requests data changes
@@ -43,6 +52,9 @@ export default function AcademyRequests({ session }) {
       ) {
         return
       }
+
+      console.log("Updating request:", { id, status, academyId: session.academyId })
+      console.log("API URL:", `/api/playerRequests/academy/${session.academyId}/${id}`)
 
       await api(`/api/playerRequests/academy/${session.academyId}/${id}`, {
         method: "PATCH",

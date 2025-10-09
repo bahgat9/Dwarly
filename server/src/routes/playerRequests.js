@@ -97,6 +97,10 @@ router.patch(
   auth(),
   requireRole("academy", "admin"),
   async (req, res) => {
+    console.log("PATCH /academy/:academyId/:id - req.params:", req.params);
+    console.log("PATCH /academy/:academyId/:id - req.user:", req.user);
+    console.log("PATCH /academy/:academyId/:id - req.body:", req.body);
+    
     const { academyId, id } = req.params;
     const { status } = req.body;
 
@@ -149,6 +153,9 @@ router.get("/admin", auth(), requireRole("admin"), async (_req, res) => {
  * Academy: delete a request for their academy
  */
 router.delete("/academy/:academyId/:id", auth(), requireRole("academy"), async (req, res) => {
+  console.log("DELETE /academy/:academyId/:id - req.params:", req.params);
+  console.log("DELETE /academy/:academyId/:id - req.user:", req.user);
+  
   const { academyId, id } = req.params;
 
   // Security check: academy can only delete their own requests
@@ -165,12 +172,19 @@ router.delete("/academy/:academyId/:id", auth(), requireRole("academy"), async (
 /**
  * Admin: delete a request
  */
-router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
+router.delete("/admin/:id", auth(), requireRole("admin"), async (req, res) => {
   const { id } = req.params;
   const deleted = await PlayerRequest.findByIdAndDelete(id);
   if (!deleted) return res.status(404).json({ error: "Request not found" });
 
   res.json({ success: true, message: "Player request deleted" });
+});
+
+// Debug route to catch unmatched requests
+router.all("*", (req, res) => {
+  console.log("Unmatched playerRequests route:", req.method, req.path);
+  console.log("Full URL:", req.url);
+  res.status(404).json({ error: "Route not found", method: req.method, path: req.path });
 });
 
 export default router;
