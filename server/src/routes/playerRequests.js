@@ -60,6 +60,8 @@ router.get(
 
     console.log("PlayerRequests /academy/:academyId endpoint - req.user:", req.user);
     console.log("PlayerRequests /academy/:academyId endpoint - requested academyId:", academyId);
+    console.log("PlayerRequests /academy/:academyId endpoint - user role:", req.user.role);
+    console.log("PlayerRequests /academy/:academyId endpoint - user academyId:", req.user.academyId);
 
     // Security check: academy can only view its own requests
     if (req.user.role === "academy" && (!req.user.academyId || req.user.academyId.toString() !== academyId)) {

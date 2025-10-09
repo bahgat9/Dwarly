@@ -28,6 +28,9 @@ export default function AcademyRequests({ session }) {
         <div className="text-sm text-white/70">
           Session data: {JSON.stringify(session, null, 2)}
         </div>
+        <div className="text-sm text-white/70">
+          This usually means your account is not properly linked to an academy.
+        </div>
       </div>
     )
   }
@@ -48,7 +51,8 @@ export default function AcademyRequests({ session }) {
     console.log("AcademyRequests - RequestsData:", requestsData)
     console.log("AcademyRequests - Loading:", requestsLoading)
     console.log("AcademyRequests - Error:", requestsError)
-  }, [requestsData, requestsLoading, requestsError])
+    console.log("AcademyRequests - API URL:", `/api/playerRequests/academy/${session.academyId}?page=${page}&limit=5`)
+  }, [requestsData, requestsLoading, requestsError, session.academyId, page])
 
   const requests = requestsData?.items || []
 

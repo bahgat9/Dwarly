@@ -76,13 +76,13 @@ fetchRequests: async () => {
       return matches.map(match => ({
         id: match._id,
         creatorId: match.creatorId,
-        academy: {
+        academy: match.academy ? {
           _id: match.academy._id,
           name: match.academy.name,
           nameAr: match.academy.nameAr,
           phone: match.academy.phone,
           logo: match.academy.logo,
-        },
+        } : null,
         phone: match.phone,
         duration: match.duration,
         description: match.description || "Friendly match",

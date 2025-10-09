@@ -169,6 +169,7 @@ router.get("/session", auth(false), async (req, res) => {
 
     // 🔧 Auto-link on session as well
     if (user.role === "academy" && !user.academyId) {
+      console.log("Auto-linking academy user:", user.name, user.email);
       let linked = null;
       const candidateName = (user.academyName || user.name || "").trim();
       if (candidateName) {
@@ -178,11 +179,14 @@ router.get("/session", auth(false), async (req, res) => {
             { nameAr: new RegExp("^" + candidateName + "$", "i") },
           ],
         });
+        console.log("Found academy by name:", linked?.name);
       }
       if (!linked && candidateName) {
+        console.log("Creating new academy:", candidateName);
         linked = await Academy.create({ name: candidateName, verified: false });
       }
       if (linked) {
+        console.log("Linking user to academy:", linked.name);
         user = await User.findByIdAndUpdate(
           req.user.id,
           { $set: { academyId: linked._id, academyName: linked.name } },
@@ -190,6 +194,8 @@ router.get("/session", auth(false), async (req, res) => {
         ).select("-password");
         // Re-issue cookie token with academyId
         setToken(res, user);
+      } else {
+        console.log("Could not find or create academy for user:", user.name);
       }
     }
 

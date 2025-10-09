@@ -28,6 +28,11 @@ router.post("/", auth(), requireRole("academy"), async (req, res) => {
   
   const { ageGroup, dateTime, locationDescription, locationGeo, homeAway, phone, duration, description } = req.body;
 
+  if (!req.user.academyId) {
+    console.log("No academyId in user session:", req.user);
+    return res.status(400).json({ error: "User is not linked to an academy" });
+  }
+
   const academy = await Academy.findById(req.user.academyId);
   if (!academy) {
     console.log("Academy not found for user:", req.user.academyId);
