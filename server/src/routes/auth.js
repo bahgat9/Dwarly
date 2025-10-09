@@ -193,16 +193,20 @@ router.get("/session", auth(false), async (req, res) => {
       }
     }
 
+    const userData = {
+      id: user._id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      academyId: user.academyId,
+      academyName: user.academyName,
+    };
+    
+    console.log("Session endpoint - User data:", userData);
+    
     res.json({
-      user: {
-        id: user._id,
-        role: user.role,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        academyId: user.academyId,
-        academyName: user.academyName,
-      },
+      user: userData,
     });
   } catch (e) {
     res.status(500).json({ error: "Session check failed", detail: e.message });

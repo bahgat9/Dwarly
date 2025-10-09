@@ -170,9 +170,97 @@ router.delete("/academy/:academyId/:id", auth(), requireRole("academy"), async (
 });
 
 /**
+ * Admin: approve or reject a request
+ */
+router.patch("/admin/:id", auth(), requireRole("admin"), async (req, res) => {
+  console.log("PATCH /admin/:id - req.params:", req.params);
+  console.log("PATCH /admin/:id - req.user:", req.user);
+  console.log("PATCH /admin/:id - req.body:", req.body);
+  
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status" });
+  }
+
+  const pr = await PlayerRequest.findById(id);
+  if (!pr) return res.status(404).json({ error: "Request not found" });
+
+  pr.status = status;
+  pr.respondedAt = new Date();
+
+  // If rejected, set expireAt for auto-delete after 15 minutes
+  if (status === "rejected") {
+    pr.expireAt = new Date(Date.now() + 15 * 60 * 1000);
+  }
+
+  await pr.save();
+
+  // If approved, optionally add player to academy.players
+  if (status === "approved") {
+    await Academy.findByIdAndUpdate(pr.academy, {
+      $addToSet: { players: pr.user },
+    });
+  }
+
+  res.json({ success: true, data: pr });
+});
+
+/**
  * Admin: delete a request
  */
 router.delete("/admin/:id", auth(), requireRole("admin"), async (req, res) => {
+  console.log("DELETE /admin/:id - req.params:", req.params);
+  console.log("DELETE /admin/:id - req.user:", req.user);
+  
+  const { id } = req.params;
+  const deleted = await PlayerRequest.findByIdAndDelete(id);
+  if (!deleted) return res.status(404).json({ error: "Request not found" });
+
+  res.json({ success: true, message: "Player request deleted" });
+});
+
+// Fallback routes for old API calls (for backward compatibility)
+router.patch("/:id", auth(), requireRole("admin"), async (req, res) => {
+  console.log("Fallback PATCH /:id - req.params:", req.params);
+  console.log("Fallback PATCH /:id - req.user:", req.user);
+  console.log("Fallback PATCH /:id - req.body:", req.body);
+  
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status" });
+  }
+
+  const pr = await PlayerRequest.findById(id);
+  if (!pr) return res.status(404).json({ error: "Request not found" });
+
+  pr.status = status;
+  pr.respondedAt = new Date();
+
+  // If rejected, set expireAt for auto-delete after 15 minutes
+  if (status === "rejected") {
+    pr.expireAt = new Date(Date.now() + 15 * 60 * 1000);
+  }
+
+  await pr.save();
+
+  // If approved, optionally add player to academy.players
+  if (status === "approved") {
+    await Academy.findByIdAndUpdate(pr.academy, {
+      $addToSet: { players: pr.user },
+    });
+  }
+
+  res.json({ success: true, data: pr });
+});
+
+router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
+  console.log("Fallback DELETE /:id - req.params:", req.params);
+  console.log("Fallback DELETE /:id - req.user:", req.user);
+  
   const { id } = req.params;
   const deleted = await PlayerRequest.findByIdAndDelete(id);
   if (!deleted) return res.status(404).json({ error: "Request not found" });

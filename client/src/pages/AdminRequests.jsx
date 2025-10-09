@@ -16,9 +16,10 @@
 
     async function approve(id){
       try {
-        const res = await api(`/api/playerRequests/${id}`, { 
+        console.log('Admin approving request:', id)
+        const res = await api(`/api/playerRequests/admin/${id}`, { 
           method: 'PATCH',
-          body: { status: 'approved' }
+          body: JSON.stringify({ status: 'approved' })
         })
         alert(`Request approved successfully`)
         load()
@@ -30,9 +31,10 @@
 
     async function reject(id){
       try {
-        const res = await api(`/api/playerRequests/${id}`, { 
+        console.log('Admin rejecting request:', id)
+        const res = await api(`/api/playerRequests/admin/${id}`, { 
           method: 'PATCH',
-          body: { status: 'rejected' }
+          body: JSON.stringify({ status: 'rejected' })
         })
         alert(`Request rejected successfully`)
         load()
@@ -45,7 +47,8 @@
   async function deleteRequest(id){
     if (!window.confirm('Are you sure you want to delete this request?')) return
     try {
-      await api(`/api/playerRequests/${id}`, { method: 'DELETE' })
+      console.log('Admin deleting request:', id)
+      await api(`/api/playerRequests/admin/${id}`, { method: 'DELETE' })
       alert('Request deleted successfully')
       load()
     } catch (error) {

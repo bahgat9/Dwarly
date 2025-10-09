@@ -10,6 +10,28 @@ export default function AcademyRequests({ session }) {
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
 
+  // Debug logging
+  useEffect(() => {
+    console.log("AcademyRequests - Session:", session)
+    console.log("AcademyRequests - AcademyId:", session?.academyId)
+    console.log("AcademyRequests - Role:", session?.role)
+  }, [session])
+
+  // Check if session has academyId
+  if (!session?.academyId) {
+    return (
+      <div className="max-w-5xl mx-auto py-10 space-y-6">
+        <h1 className="text-2xl font-bold">📥 {t("academyRequests.title")}</h1>
+        <div className="text-red-500">
+          Error: Academy ID not found in session. Please contact support.
+        </div>
+        <div className="text-sm text-white/70">
+          Session data: {JSON.stringify(session, null, 2)}
+        </div>
+      </div>
+    )
+  }
+
   // Real-time data for requests
   const {
     data: requestsData,
@@ -23,12 +45,10 @@ export default function AcademyRequests({ session }) {
 
   // Debug logging
   useEffect(() => {
-    console.log("AcademyRequests - Session:", session)
-    console.log("AcademyRequests - AcademyId:", session?.academyId)
     console.log("AcademyRequests - RequestsData:", requestsData)
     console.log("AcademyRequests - Loading:", requestsLoading)
     console.log("AcademyRequests - Error:", requestsError)
-  }, [session, requestsData, requestsLoading, requestsError])
+  }, [requestsData, requestsLoading, requestsError])
 
   const requests = requestsData?.items || []
 
