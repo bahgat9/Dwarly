@@ -84,9 +84,9 @@ router.post("/", auth(), requireRole("academy"), async (req, res) => {
     return res.status(400).json({ error: "Failed to create match", details: error.message });
   }
 
-  // Populate academy info in response
+  // Populate academy info in response (handle branches structure)
   const populatedMatch = await Match.findById(match._id)
-    .populate("academy", "name nameAr phone logo");
+    .populate("academy", "name nameAr phone logo branches");
 
   res.status(201).json(populatedMatch);
 });
@@ -128,8 +128,8 @@ router.get("/my", auth(), requireRole("academy"), async (req, res) => {
   const myMatches = await Match.find({
     $or: [{ academy: req.user.academyId }, { opponent: req.user.academyId }],
   })
-    .populate("academy", "name nameAr phone logo")
-    .populate("opponent", "name nameAr phone logo")
+    .populate("academy", "name nameAr phone logo branches")
+    .populate("opponent", "name nameAr phone logo branches")
     .sort({ dateTime: 1 });
 
   console.log("Matches /my endpoint - Found matches:", myMatches.length);

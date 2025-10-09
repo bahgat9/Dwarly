@@ -82,6 +82,7 @@ fetchRequests: async () => {
           nameAr: match.academy.nameAr,
           phone: match.academy.phone,
           logo: match.academy.logo,
+          branches: match.academy.branches || [],
         } : null,
         phone: match.phone,
         duration: match.duration,

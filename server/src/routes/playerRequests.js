@@ -76,7 +76,8 @@ router.get(
         console.log("EMERGENCY: User has no academyId, trying to find academy...");
         const fallbackAcademy = await Academy.findOne({});
         if (fallbackAcademy) {
-          console.log("Using fallback academy:", fallbackAcademy._id);
+          console.log("Using fallback academy:", fallbackAcademy._id, fallbackAcademy.name);
+          console.log("Academy branches:", fallbackAcademy.branches?.length || 0);
           // Update user with academyId
           await User.findByIdAndUpdate(req.user.id, { 
             academyId: fallbackAcademy._id, 

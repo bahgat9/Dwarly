@@ -178,23 +178,27 @@ router.get("/session", auth(false), async (req, res) => {
         // Try multiple strategies to find or create academy
         let linked = null;
         
-        // Strategy 1: Try by user's academyName
+        // Strategy 1: Try by user's academyName (handle branches structure)
         if (user.academyName) {
           linked = await Academy.findOne({
             $or: [
               { name: new RegExp("^" + user.academyName + "$", "i") },
               { nameAr: new RegExp("^" + user.academyName + "$", "i") },
+              { "branches.name": new RegExp("^" + user.academyName + "$", "i") },
+              { "branches.nameAr": new RegExp("^" + user.academyName + "$", "i") },
             ],
           });
           console.log("Strategy 1 - Found by academyName:", linked?.name);
         }
         
-        // Strategy 2: Try by user's name
+        // Strategy 2: Try by user's name (handle branches structure)
         if (!linked && user.name) {
           linked = await Academy.findOne({
             $or: [
               { name: new RegExp("^" + user.name + "$", "i") },
               { nameAr: new RegExp("^" + user.name + "$", "i") },
+              { "branches.name": new RegExp("^" + user.name + "$", "i") },
+              { "branches.nameAr": new RegExp("^" + user.name + "$", "i") },
             ],
           });
           console.log("Strategy 2 - Found by name:", linked?.name);
@@ -247,6 +251,8 @@ router.get("/session", auth(false), async (req, res) => {
     };
     
     console.log("Session endpoint - User data:", userData);
+    console.log("Session endpoint - User academyId type:", typeof user.academyId);
+    console.log("Session endpoint - User academyId value:", user.academyId);
     
     res.json({
       user: userData,
