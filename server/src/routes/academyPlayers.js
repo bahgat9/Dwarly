@@ -139,7 +139,7 @@ router.delete(
   })
 )
 
-// Fix route to update all players to correct academy
+// Fix route to update players with invalid academy IDs to correct academy
 router.get("/fix-players-academy", async (req, res) => {
   try {
     console.log("=== FIXING PLAYERS ACADEMY LINKING ===");
@@ -152,36 +152,47 @@ router.get("/fix-players-academy", async (req, res) => {
       return res.status(400).json({ error: "Academy ID is required" });
     }
     
-    // Find all players that are NOT linked to the target academy
+    // Find the target academy
+    const targetAcademy = await Academy.findById(targetAcademyId);
+    if (!targetAcademy) {
+      return res.status(404).json({ error: "Target academy not found" });
+    }
+    
+    // Find all academies to check which ones are valid
+    const allAcademies = await Academy.find({});
+    const validAcademyIds = allAcademies.map(a => a._id.toString());
+    console.log("Valid academy IDs:", validAcademyIds);
+    
+    // Find players with INVALID academy IDs (not pointing to any existing academy)
     const playersToUpdate = await Player.find({ 
-      academy: { $ne: targetAcademyId } 
+      academy: { $nin: validAcademyIds } 
     });
-    console.log("Found players to update:", playersToUpdate.length);
+    console.log("Found players with invalid academy IDs:", playersToUpdate.length);
     
     if (playersToUpdate.length === 0) {
       return res.json({
         success: true,
-        message: "No players found that need updating",
+        message: "No players found with invalid academy IDs",
         updated: 0,
         targetAcademyId
       });
     }
     
-    // Update all players to target academy ID
+    // Update only players with invalid academy IDs to target academy
     const result = await Player.updateMany(
-      { academy: { $ne: targetAcademyId } },
+      { academy: { $nin: validAcademyIds } },
       { $set: { academy: targetAcademyId } }
     );
     
-    console.log("Updated players:", result.modifiedCount);
+    console.log("Updated players with invalid academy IDs:", result.modifiedCount);
     
     // Verify the fix
     const academyPlayers = await Player.find({ academy: targetAcademyId });
-    console.log("Academy players after fix:", academyPlayers.length);
+    console.log("Target academy players after fix:", academyPlayers.length);
     
     res.json({
       success: true,
-      message: `Fixed ${result.modifiedCount} players`,
+      message: `Fixed ${result.modifiedCount} players with invalid academy IDs`,
       updated: result.modifiedCount,
       playersAfterFix: academyPlayers.length,
       targetAcademyId

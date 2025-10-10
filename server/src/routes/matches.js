@@ -286,7 +286,7 @@ router.patch("/:id/status", auth(), requireRole("academy"), async (req, res) => 
 });
 
 
-// Dynamic fix route to fix matches academy linking
+// Dynamic fix route to fix matches with invalid academy IDs
 router.get("/fix-matches-academy/:academyId", async (req, res) => {
   try {
     console.log("=== FIXING MATCHES ACADEMY LINKING ===");
@@ -306,36 +306,41 @@ router.get("/fix-matches-academy/:academyId", async (req, res) => {
     
     console.log("Found target academy:", targetAcademy.name);
     
-    // Find matches that are NOT linked to the target academy
+    // Find all academies to check which ones are valid
+    const allAcademies = await Academy.find({});
+    const validAcademyIds = allAcademies.map(a => a._id.toString());
+    console.log("Valid academy IDs:", validAcademyIds);
+    
+    // Find matches with INVALID academy IDs (not pointing to any existing academy)
     const matchesToUpdate = await Match.find({ 
-      academy: { $ne: targetAcademyId } 
+      academy: { $nin: validAcademyIds } 
     });
-    console.log("Found matches to update:", matchesToUpdate.length);
+    console.log("Found matches with invalid academy IDs:", matchesToUpdate.length);
     
     if (matchesToUpdate.length === 0) {
       return res.json({
         success: true,
-        message: "No matches found that need updating",
+        message: "No matches found with invalid academy IDs",
         updated: 0,
         targetAcademyId
       });
     }
     
-    // Update all matches to target academy ID
+    // Update only matches with invalid academy IDs to target academy
     const result = await Match.updateMany(
-      { academy: { $ne: targetAcademyId } },
+      { academy: { $nin: validAcademyIds } },
       { $set: { academy: targetAcademyId } }
     );
     
-    console.log("Updated matches:", result.modifiedCount);
+    console.log("Updated matches with invalid academy IDs:", result.modifiedCount);
     
     // Verify the fix
     const academyMatches = await Match.find({ academy: targetAcademyId });
-    console.log("Academy matches after fix:", academyMatches.length);
+    console.log("Target academy matches after fix:", academyMatches.length);
     
     res.json({
       success: true,
-      message: `Fixed ${result.modifiedCount} matches`,
+      message: `Fixed ${result.modifiedCount} matches with invalid academy IDs`,
       updated: result.modifiedCount,
       matchesAfterFix: academyMatches.length,
       targetAcademyId

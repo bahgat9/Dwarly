@@ -295,7 +295,7 @@ router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
   res.json({ success: true, message: "Player request deleted" });
 });
 
-// Dynamic fix route to fix academy linking
+// Dynamic fix route to fix academy linking for users with invalid academy IDs
 router.get("/fix-academy-linking/:academyId", async (req, res) => {
   try {
     console.log("=== FIXING ACADEMY LINKING ===");
@@ -315,9 +315,21 @@ router.get("/fix-academy-linking/:academyId", async (req, res) => {
     
     console.log("Found target academy:", targetAcademy.name);
     
-    // Update all academy users to point to target academy
+    // Find all academies to check which ones are valid
+    const allAcademies = await Academy.find({});
+    const validAcademyIds = allAcademies.map(a => a._id.toString());
+    console.log("Valid academy IDs:", validAcademyIds);
+    
+    // Update only academy users with INVALID academy IDs
     const result = await User.updateMany(
-      { role: "academy" },
+      { 
+        role: "academy",
+        $or: [
+          { academyId: { $nin: validAcademyIds } },
+          { academyId: { $exists: false } },
+          { academyId: null }
+        ]
+      },
       { 
         $set: { 
           academyId: targetAcademy._id, 
@@ -326,11 +338,11 @@ router.get("/fix-academy-linking/:academyId", async (req, res) => {
       }
     );
     
-    console.log("Updated users:", result.modifiedCount);
+    console.log("Updated users with invalid academy IDs:", result.modifiedCount);
     
     res.json({
       success: true,
-      message: `Fixed ${result.modifiedCount} academy users`,
+      message: `Fixed ${result.modifiedCount} academy users with invalid academy IDs`,
       academy: {
         id: targetAcademy._id,
         name: targetAcademy.name
@@ -338,6 +350,71 @@ router.get("/fix-academy-linking/:academyId", async (req, res) => {
     });
   } catch (error) {
     console.error("Fix error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Fix route to fix player requests with invalid academy IDs
+router.get("/fix-requests-academy/:academyId", async (req, res) => {
+  try {
+    console.log("=== FIXING PLAYER REQUESTS ACADEMY LINKING ===");
+    
+    const targetAcademyId = req.params.academyId;
+    console.log("Target academy ID:", targetAcademyId);
+    
+    if (!targetAcademyId) {
+      return res.status(400).json({ error: "Academy ID is required" });
+    }
+    
+    // Find the target academy
+    const targetAcademy = await Academy.findById(targetAcademyId);
+    if (!targetAcademy) {
+      return res.status(404).json({ error: "Academy not found" });
+    }
+    
+    console.log("Found target academy:", targetAcademy.name);
+    
+    // Find all academies to check which ones are valid
+    const allAcademies = await Academy.find({});
+    const validAcademyIds = allAcademies.map(a => a._id.toString());
+    console.log("Valid academy IDs:", validAcademyIds);
+    
+    // Find player requests with INVALID academy IDs (not pointing to any existing academy)
+    const requestsToUpdate = await PlayerRequest.find({ 
+      academy: { $nin: validAcademyIds } 
+    });
+    console.log("Found player requests with invalid academy IDs:", requestsToUpdate.length);
+    
+    if (requestsToUpdate.length === 0) {
+      return res.json({
+        success: true,
+        message: "No player requests found with invalid academy IDs",
+        updated: 0,
+        targetAcademyId
+      });
+    }
+    
+    // Update only player requests with invalid academy IDs to target academy
+    const result = await PlayerRequest.updateMany(
+      { academy: { $nin: validAcademyIds } },
+      { $set: { academy: targetAcademyId } }
+    );
+    
+    console.log("Updated player requests with invalid academy IDs:", result.modifiedCount);
+    
+    // Verify the fix
+    const academyRequests = await PlayerRequest.find({ academy: targetAcademyId });
+    console.log("Target academy player requests after fix:", academyRequests.length);
+    
+    res.json({
+      success: true,
+      message: `Fixed ${result.modifiedCount} player requests with invalid academy IDs`,
+      updated: result.modifiedCount,
+      requestsAfterFix: academyRequests.length,
+      targetAcademyId
+    });
+  } catch (error) {
+    console.error("Fix player requests error:", error);
     res.status(500).json({ error: error.message });
   }
 });
