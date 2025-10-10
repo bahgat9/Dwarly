@@ -295,26 +295,33 @@ router.delete("/:id", auth(), requireRole("admin"), async (req, res) => {
   res.json({ success: true, message: "Player request deleted" });
 });
 
-// One-time fix route to fix academy linking
-router.get("/fix-academy-linking", async (req, res) => {
+// Dynamic fix route to fix academy linking
+router.get("/fix-academy-linking/:academyId", async (req, res) => {
   try {
     console.log("=== FIXING ACADEMY LINKING ===");
     
-    // Find the main TUT Academy
-    const tutAcademy = await Academy.findById("68e516e052e0f422eb4016ba");
-    if (!tutAcademy) {
-      return res.status(500).json({ error: "TUT Academy not found" });
+    const targetAcademyId = req.params.academyId;
+    console.log("Target academy ID:", targetAcademyId);
+    
+    if (!targetAcademyId) {
+      return res.status(400).json({ error: "Academy ID is required" });
     }
     
-    console.log("Found TUT Academy:", tutAcademy.name);
+    // Find the target academy
+    const targetAcademy = await Academy.findById(targetAcademyId);
+    if (!targetAcademy) {
+      return res.status(404).json({ error: "Academy not found" });
+    }
     
-    // Update all academy users to point to TUT Academy
+    console.log("Found target academy:", targetAcademy.name);
+    
+    // Update all academy users to point to target academy
     const result = await User.updateMany(
       { role: "academy" },
       { 
         $set: { 
-          academyId: tutAcademy._id, 
-          academyName: tutAcademy.name 
+          academyId: targetAcademy._id, 
+          academyName: targetAcademy.name 
         } 
       }
     );
@@ -325,14 +332,21 @@ router.get("/fix-academy-linking", async (req, res) => {
       success: true,
       message: `Fixed ${result.modifiedCount} academy users`,
       academy: {
-        id: tutAcademy._id,
-        name: tutAcademy.name
+        id: targetAcademy._id,
+        name: targetAcademy.name
       }
     });
   } catch (error) {
     console.error("Fix error:", error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Legacy route for TUT Academy (backward compatibility)
+router.get("/fix-academy-linking", async (req, res) => {
+  // Redirect to dynamic route with TUT Academy ID
+  req.params.academyId = "68e516e052e0f422eb4016ba";
+  return router.handle(req, res);
 });
 
 // Debug route to check database state (no auth required)

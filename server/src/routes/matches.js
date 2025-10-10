@@ -286,13 +286,73 @@ router.patch("/:id/status", auth(), requireRole("academy"), async (req, res) => 
 });
 
 
+// Dynamic fix route to fix matches academy linking
+router.get("/fix-matches-academy/:academyId", async (req, res) => {
+  try {
+    console.log("=== FIXING MATCHES ACADEMY LINKING ===");
+    
+    const targetAcademyId = req.params.academyId;
+    console.log("Target academy ID:", targetAcademyId);
+    
+    if (!targetAcademyId) {
+      return res.status(400).json({ error: "Academy ID is required" });
+    }
+    
+    // Find the target academy
+    const targetAcademy = await Academy.findById(targetAcademyId);
+    if (!targetAcademy) {
+      return res.status(404).json({ error: "Academy not found" });
+    }
+    
+    console.log("Found target academy:", targetAcademy.name);
+    
+    // Find matches that are NOT linked to the target academy
+    const matchesToUpdate = await Match.find({ 
+      academy: { $ne: targetAcademyId } 
+    });
+    console.log("Found matches to update:", matchesToUpdate.length);
+    
+    if (matchesToUpdate.length === 0) {
+      return res.json({
+        success: true,
+        message: "No matches found that need updating",
+        updated: 0,
+        targetAcademyId
+      });
+    }
+    
+    // Update all matches to target academy ID
+    const result = await Match.updateMany(
+      { academy: { $ne: targetAcademyId } },
+      { $set: { academy: targetAcademyId } }
+    );
+    
+    console.log("Updated matches:", result.modifiedCount);
+    
+    // Verify the fix
+    const academyMatches = await Match.find({ academy: targetAcademyId });
+    console.log("Academy matches after fix:", academyMatches.length);
+    
+    res.json({
+      success: true,
+      message: `Fixed ${result.modifiedCount} matches`,
+      updated: result.modifiedCount,
+      matchesAfterFix: academyMatches.length,
+      targetAcademyId
+    });
+  } catch (error) {
+    console.error("Fix matches error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Debug route to check database state
 router.get("/debug", async (req, res) => {
   try {
     const academies = await Academy.find({}).limit(3);
     const users = await User.find({ role: "academy" }).limit(3);
     const matches = await Match.find({}).limit(3);
-    
+
     res.json({
       academies: academies.map(a => ({
         id: a._id,
