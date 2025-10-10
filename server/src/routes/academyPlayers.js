@@ -139,6 +139,50 @@ router.delete(
   })
 )
 
+// Fix route to update all players to correct academy
+router.get("/fix-players-academy", async (req, res) => {
+  try {
+    console.log("=== FIXING PLAYERS ACADEMY LINKING ===");
+    
+    const oldAcademyId = "68b372dcc703a2d7dd81c7d3";
+    const newAcademyId = "68e516e052e0f422eb4016ba";
+    
+    // Find players with old academy ID
+    const playersToUpdate = await Player.find({ academy: oldAcademyId });
+    console.log("Found players to update:", playersToUpdate.length);
+    
+    if (playersToUpdate.length === 0) {
+      return res.json({
+        success: true,
+        message: "No players found with old academy ID",
+        updated: 0
+      });
+    }
+    
+    // Update all players to new academy ID
+    const result = await Player.updateMany(
+      { academy: oldAcademyId },
+      { $set: { academy: newAcademyId } }
+    );
+    
+    console.log("Updated players:", result.modifiedCount);
+    
+    // Verify the fix
+    const tutAcademyPlayers = await Player.find({ academy: newAcademyId });
+    console.log("TUT Academy players after fix:", tutAcademyPlayers.length);
+    
+    res.json({
+      success: true,
+      message: `Fixed ${result.modifiedCount} players`,
+      updated: result.modifiedCount,
+      playersAfterFix: tutAcademyPlayers.length
+    });
+  } catch (error) {
+    console.error("Fix players error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Debug route to check players in database
 router.get("/debug", async (req, res) => {
   try {
