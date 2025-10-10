@@ -144,38 +144,47 @@ router.get("/fix-players-academy", async (req, res) => {
   try {
     console.log("=== FIXING PLAYERS ACADEMY LINKING ===");
     
-    const oldAcademyId = "68b372dcc703a2d7dd81c7d3";
-    const newAcademyId = "68e516e052e0f422eb4016ba";
+    // Get the target academy ID from the URL params
+    const targetAcademyId = req.params.academyId;
+    console.log("Target academy ID:", targetAcademyId);
     
-    // Find players with old academy ID
-    const playersToUpdate = await Player.find({ academy: oldAcademyId });
+    if (!targetAcademyId) {
+      return res.status(400).json({ error: "Academy ID is required" });
+    }
+    
+    // Find all players that are NOT linked to the target academy
+    const playersToUpdate = await Player.find({ 
+      academy: { $ne: targetAcademyId } 
+    });
     console.log("Found players to update:", playersToUpdate.length);
     
     if (playersToUpdate.length === 0) {
       return res.json({
         success: true,
-        message: "No players found with old academy ID",
-        updated: 0
+        message: "No players found that need updating",
+        updated: 0,
+        targetAcademyId
       });
     }
     
-    // Update all players to new academy ID
+    // Update all players to target academy ID
     const result = await Player.updateMany(
-      { academy: oldAcademyId },
-      { $set: { academy: newAcademyId } }
+      { academy: { $ne: targetAcademyId } },
+      { $set: { academy: targetAcademyId } }
     );
     
     console.log("Updated players:", result.modifiedCount);
     
     // Verify the fix
-    const tutAcademyPlayers = await Player.find({ academy: newAcademyId });
-    console.log("TUT Academy players after fix:", tutAcademyPlayers.length);
+    const academyPlayers = await Player.find({ academy: targetAcademyId });
+    console.log("Academy players after fix:", academyPlayers.length);
     
     res.json({
       success: true,
       message: `Fixed ${result.modifiedCount} players`,
       updated: result.modifiedCount,
-      playersAfterFix: tutAcademyPlayers.length
+      playersAfterFix: academyPlayers.length,
+      targetAcademyId
     });
   } catch (error) {
     console.error("Fix players error:", error);
