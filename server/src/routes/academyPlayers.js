@@ -14,9 +14,20 @@ const upload = multer({ storage: multer.memoryStorage() })
 router.get(
   "/",
   safeHandler(async (req, res) => {
+    console.log("=== ACADEMY PLAYERS DEBUG ===");
+    console.log("AcademyId from params:", req.params.academyId);
+    console.log("Query params:", req.query);
+    
     const { page = 1, limit = 10 } = req.query
     const academyId = req.params.academyId
 
+    if (!academyId) {
+      console.log("ERROR: No academyId provided");
+      return res.status(400).json({ error: "Academy ID is required" });
+    }
+
+    console.log("Searching for players with academy:", academyId);
+    
     const [items, total] = await Promise.all([
       Player.find({ academy: academyId })
         .skip((page - 1) * limit)
@@ -24,6 +35,11 @@ router.get(
         .sort({ createdAt: -1 }),
       Player.countDocuments({ academy: academyId }),
     ])
+
+    console.log("Found players:", items.length);
+    console.log("Total players:", total);
+    console.log("Players data:", JSON.stringify(items, null, 2));
+    console.log("=== END ACADEMY PLAYERS DEBUG ===");
 
     res.json({ items, total, page: Number(page), pages: Math.ceil(total / limit) })
   })
@@ -122,5 +138,36 @@ router.delete(
     res.json({ message: "Player deleted successfully" })
   })
 )
+
+// Debug route to check players in database
+router.get("/debug", async (req, res) => {
+  try {
+    console.log("=== PLAYERS DEBUG ROUTE ===");
+    
+    const allPlayers = await Player.find({}).limit(10);
+    console.log("All players in database:", allPlayers.length);
+    
+    const tutAcademyPlayers = await Player.find({ academy: "68e516e052e0f422eb4016ba" });
+    console.log("TUT Academy players:", tutAcademyPlayers.length);
+    
+    res.json({
+      allPlayers: allPlayers.map(p => ({
+        id: p._id,
+        name: p.name,
+        academy: p.academy,
+        position: p.position
+      })),
+      tutAcademyPlayers: tutAcademyPlayers.map(p => ({
+        id: p._id,
+        name: p.name,
+        academy: p.academy,
+        position: p.position
+      }))
+    });
+  } catch (error) {
+    console.error("Players debug error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router

@@ -108,19 +108,36 @@ export default function AcademyPlayers({ session }) {
 
   // Load players
   async function loadPlayers(p = 1) {
-    if (!session?.academyId) return
+    console.log("=== LOAD PLAYERS DEBUG ===");
+    console.log("Session:", session);
+    console.log("Session AcademyId:", session?.academyId);
+    console.log("Page:", p);
+    
+    if (!session?.academyId) {
+      console.log("ERROR: No academyId in session");
+      return
+    }
+    
     try {
       setLoading(true)
       setError("")
-      const data = await api(
-        `/api/academies/${session.academyId}/players?page=${p}&limit=6`
-      )
+      
+      const url = `/api/academies/${session.academyId}/players?page=${p}&limit=6`
+      console.log("API URL:", url);
+      
+      const data = await api(url)
+      console.log("API Response:", data);
+      
       // Support both envelope and plain
       const items = data.items || data
+      console.log("Items extracted:", items);
+      
       setPlayers(items || [])
       setPages(data.pages || 1)
       setPage(data.page || p)
       setTotal(data.total ?? (data.pagination?.total) ?? (Array.isArray(items) ? items.length : 0))
+      
+      console.log("Final state - players:", items?.length || 0, "pages:", data.pages || 1, "total:", data.total || 0);
     } catch (err) {
       console.error("Failed to load players:", err)
       setError("Failed to load players.")
